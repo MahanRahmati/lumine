@@ -8,6 +8,9 @@ clap = { version = "4.5.54", features = ["derive"] }
 toml = "0.9.11"
 xdg = "3.0.0"
 serde = { version = "1.0.228", features = ["derive"] }
+regex = "1.12.2"
+chrono = "0.4.42"
 
 [lints.clippy]
 needless_return = "allow"
+upper_case_acronyms = "allow"
