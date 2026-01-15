@@ -2,10 +2,13 @@ mod cli;
 mod config;
 mod ffmpeg;
 mod files;
+mod whisper;
 
 use crate::cli::Cli;
 use crate::config::Config;
 use crate::ffmpeg::FFMPEG;
+use crate::files::operations::remove_file;
+use crate::whisper::Whisper;
 
 use clap::Parser;
 
@@ -36,5 +39,23 @@ fn main() {
     }
   };
 
-  println!("Hello, world!");
+  let whisper = Whisper::new(
+    config.get_whisper_url(),
+    file_path.clone(),
+    config.get_verbose(),
+  );
+
+  let transcript = match whisper.send_audio() {
+    Ok(transcript) => transcript,
+    Err(e) => {
+      println!("Transcription Error: {}", e);
+      std::process::exit(1);
+    }
+  };
+
+  if config.get_remove_after_transcript() {
+    let _ = remove_file(&file_path.clone(), config.get_verbose());
+  }
+
+  println!("{}", transcript);
 }
