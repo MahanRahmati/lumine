@@ -119,7 +119,7 @@ impl Config {
   }
 
   pub fn get_silence_limit(&self) -> i32 {
-    self.ffmpeg.silence_limit.unwrap_or(1)
+    self.ffmpeg.silence_limit.unwrap_or(2)
   }
 
   pub fn get_silence_detect_noise(&self) -> i32 {
