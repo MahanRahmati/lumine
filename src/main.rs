@@ -1,4 +1,5 @@
 mod cli;
+mod files;
 
 use crate::cli::Cli;
 
