@@ -2,8 +2,8 @@ mod errors;
 
 use reqwest::blocking::multipart;
 
-use super::files::operations;
-
+use crate::files::operations;
+use crate::network::{HttpClient, errors::NetworkError};
 use crate::whisper::errors::{WhisperError, WhisperResult};
 
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -47,8 +47,6 @@ impl Whisper {
       return Err(WhisperError::FileNotFound);
     }
 
-    self.check_url()?;
-
     if self.verbose {
       println!("Preparing multipart form for audio file upload...");
     }
@@ -61,87 +59,19 @@ impl Whisper {
       Err(_) => return Err(WhisperError::RequestFailed),
     };
 
-    let client = reqwest::blocking::Client::new();
-    let inference_url = format!("{}/inference", self.url);
+    let client = HttpClient::new(self.url.clone(), self.verbose);
 
-    if self.verbose {
-      println!(
-        "Sending audio file to Whisper via POST request to: {}",
-        inference_url
-      );
-    }
-
-    let response = match client.post(&inference_url).multipart(form).send() {
-      Ok(response) => response,
-      Err(_) => return Err(WhisperError::RequestFailed),
-    };
-
-    if self.verbose {
-      println!(
-        "Received response from Whisper service. Status: {}",
-        response.status()
-      );
-    }
-
-    if response.status() != reqwest::StatusCode::OK {
-      return Err(WhisperError::ResponseError);
-    }
-
-    let response_text = match response.text() {
-      Ok(text) => text,
-      Err(_) => return Err(WhisperError::DecodeError),
-    };
-
-    let whisper_response: WhisperResponse =
-      match serde_json::from_str(&response_text) {
-        Ok(response) => response,
-        Err(_) => return Err(WhisperError::DecodeError),
-      };
-
-    return Ok(whisper_response);
-  }
-
-  fn check_url(&self) -> WhisperResult<()> {
-    if self.verbose {
-      println!("Checking if Whisper service URL is reachable...");
-    }
-
-    let _url = match reqwest::Url::parse(&self.url) {
-      Ok(url) => url,
-      Err(e) => {
-        if self.verbose {
-          println!("Invalid URL format: {}", e);
-        }
-        return Err(WhisperError::InvalidURL);
+    match client.post_with_form::<WhisperResponse>(form, "inference") {
+      Ok(response) => return Ok(response),
+      Err(network_error) => {
+        let whisper_error = match network_error {
+          NetworkError::RequestFailed => WhisperError::RequestFailed,
+          NetworkError::InvalidURL => WhisperError::InvalidURL,
+          NetworkError::ResponseError => WhisperError::ResponseError,
+          NetworkError::DecodeError => WhisperError::DecodeError,
+        };
+        return Err(whisper_error);
       }
     };
-
-    let client = reqwest::blocking::Client::new();
-
-    let response = match client.get(&self.url).send() {
-      Ok(response) => response,
-      Err(e) => {
-        if self.verbose {
-          println!("Failed to connect to URL: {}", e);
-        }
-        return Err(WhisperError::RequestFailed);
-      }
-    };
-
-    let status = response.status();
-    if status != reqwest::StatusCode::OK
-      && status != reqwest::StatusCode::NOT_FOUND
-    {
-      if self.verbose {
-        println!("URL returned unexpected status: {}", status);
-      }
-      return Err(WhisperError::InvalidURL);
-    }
-
-    if self.verbose {
-      println!("Whisper service URL is reachable with status: {}", status);
-    }
-
-    return Ok(());
   }
 }
