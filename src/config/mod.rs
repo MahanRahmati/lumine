@@ -120,7 +120,7 @@ impl Default for Config {
       },
       general: GeneralConfig {
         remove_after_transcript: Some(true),
-        verbose: Some(true),
+        verbose: Some(false),
       },
     };
   }

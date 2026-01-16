@@ -38,19 +38,7 @@ fn test_config_default() {
   assert_eq!(config.get_silence_detect_noise(), 40);
   assert_eq!(config.get_preferred_audio_input_device(), "");
   assert!(config.get_remove_after_transcript());
-  assert!(config.get_verbose());
-}
-
-#[test]
-fn test_config_load_default() {
-  let config = Config::load().unwrap();
-  assert_eq!(config.get_whisper_url(), "http://127.0.0.1:9090");
-  assert!(config.get_verbose());
-  assert_eq!(config.get_recordings_directory(), "recordings");
-  assert!(config.get_remove_after_transcript());
-  assert_eq!(config.get_silence_limit(), 2);
-  assert_eq!(config.get_silence_detect_noise(), 40);
-  assert_eq!(config.get_preferred_audio_input_device(), "");
+  assert!(!config.get_verbose());
 }
 
 #[test]

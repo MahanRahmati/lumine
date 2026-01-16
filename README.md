@@ -22,7 +22,7 @@ preferred_audio_input_device = ""
 
 [general]
 remove_after_transcript = true
-verbose = true
+verbose = false
 ```
 
 ## License
