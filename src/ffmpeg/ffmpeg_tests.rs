@@ -1,4 +1,4 @@
-use crate::config::Config;
+use crate::config::*;
 use crate::ffmpeg::*;
 
 #[test]
