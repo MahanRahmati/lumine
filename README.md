@@ -6,9 +6,11 @@ Lumine is configured using a toml configuration file.
 
 The configuration file is loaded from XDG configuration directory.
 
-`$XDG_CONFIG_HOME/lumine/config.toml`
+- `$XDG_CONFIG_HOME/lumine/config.toml`
 
-```toml
+### Default Configuration
+
+```config.toml
 [whisper]
 url = "http://127.0.0.1:9090"
 
@@ -22,3 +24,15 @@ preferred_audio_input_device = ""
 remove_after_transcript = true
 verbose = true
 ```
+
+## License
+
+This project is licensed under the MIT License.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Support
+
+If you encounter any issues, please file an issue on the GitHub repository.
