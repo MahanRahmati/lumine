@@ -1,5 +1,8 @@
 mod errors;
 
+#[cfg(test)]
+mod whisper_tests;
+
 use reqwest::blocking::multipart;
 
 use crate::files::operations;
