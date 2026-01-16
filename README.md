@@ -1,5 +1,23 @@
 # Lumine
 
+## Usage
+
+### Record and Transcribe Audio
+
+By default, Lumine records audio from your input device and transcribes it:
+
+```bash
+lumine
+```
+
+### Transcribe Existing Audio File
+
+You can also transcribe an existing audio file directly:
+
+```bash
+lumine transcribe --file samples/jfk.wav
+```
+
 ## Configuration
 
 Lumine is configured using a toml configuration file.
