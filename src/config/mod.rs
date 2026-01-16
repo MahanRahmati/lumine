@@ -1,14 +1,14 @@
+pub mod errors;
+
+#[cfg(test)]
+mod config_tests;
+
 use std::path::PathBuf;
 
 use crate::config::errors::{ConfigError, ConfigResult};
 use crate::files::operations;
 
 use xdg::BaseDirectories;
-
-pub mod errors;
-
-#[cfg(test)]
-mod config_tests;
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct Config {
