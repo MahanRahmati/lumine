@@ -13,7 +13,6 @@ pub struct Config {
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct WhisperConfig {
   pub url: String,
-  pub verbose: Option<bool>,
 }
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
@@ -22,7 +21,6 @@ pub struct FFMPEGConfig {
   pub silence_limit: Option<i32>,
   pub silence_detect_noise: Option<i32>,
   pub preferred_audio_input_device: Option<String>,
-  pub verbose: Option<bool>,
 }
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
@@ -39,28 +37,6 @@ impl Config {
       Some(path) => path,
       None => {
         let default_config = Config::default();
-        let config_path: std::path::PathBuf =
-          match xdg_dirs.place_config_file("lumine.toml") {
-            Ok(path) => path,
-            Err(e) => {
-              return Err(ConfigError::FileWrite(format!(
-                "Failed to place config file: {}",
-                e
-              )));
-            }
-          };
-
-        if let Some(parent) = config_path.parent()
-          && let Err(e) =
-            operations::create_directory_all(&parent.to_string_lossy())
-        {
-          return Err(ConfigError::FileWrite(format!(
-            "Failed to create config directory: {}",
-            e
-          )));
-        }
-
-        default_config.save_to_file(&config_path.to_string_lossy())?;
         return Ok(default_config);
       }
     };
@@ -83,27 +59,12 @@ impl Config {
     return Ok(config);
   }
 
-  fn save_to_file(&self, path: &str) -> Result<(), ConfigError> {
-    let toml_string = toml::to_string_pretty(self)
-      .map_err(|e| ConfigError::Serialize(e.to_string()))?;
-
-    operations::write_string(path, &toml_string)
-      .map_err(|e| ConfigError::FileWrite(e.to_string()))?;
-
-    return Ok(());
-  }
-
   pub fn get_whisper_url(&self) -> String {
     self.whisper.url.clone()
   }
 
   pub fn get_verbose(&self) -> bool {
-    self
-      .general
-      .verbose
-      .or(self.whisper.verbose)
-      .or(self.ffmpeg.verbose)
-      .unwrap_or(false)
+    self.general.verbose.unwrap_or(false)
   }
 
   pub fn get_recordings_directory(&self) -> String {
@@ -142,14 +103,12 @@ impl Default for Config {
     return Config {
       whisper: WhisperConfig {
         url: String::from("http://127.0.0.1:9090"),
-        verbose: Some(true),
       },
       ffmpeg: FFMPEGConfig {
         recordings_directory: Some(String::from("recordings")),
         silence_limit: Some(2),
         silence_detect_noise: Some(40),
         preferred_audio_input_device: Some(String::new()),
-        verbose: Some(true),
       },
       general: GeneralConfig {
         remove_after_transcript: Some(true),

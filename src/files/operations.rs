@@ -41,10 +41,3 @@ pub fn read_to_string(file_path: &str) -> FileResult<String> {
     Err(e) => return Err(FileError::FileRead(e.to_string())),
   }
 }
-
-pub fn write_string(file_path: &str, content: &str) -> FileResult<()> {
-  match std::fs::write(file_path, content) {
-    Ok(_) => return Ok(()),
-    Err(e) => return Err(FileError::FileWrite(e.to_string())),
-  }
-}

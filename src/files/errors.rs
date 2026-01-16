@@ -3,7 +3,6 @@ pub enum FileError {
   DirectoryCreate(String),
   FileRemove(String),
   FileRead(String),
-  FileWrite(String),
   FileNotFound(String),
 }
 
@@ -30,13 +29,6 @@ impl std::fmt::Display for FileError {
         write!(
           f,
           "Cannot read file '{}'. Please check if the file exists and you have permission to access it.",
-          msg
-        )
-      }
-      FileError::FileWrite(msg) => {
-        write!(
-          f,
-          "Cannot write to '{}'. Please check permissions and available disk space.",
           msg
         )
       }

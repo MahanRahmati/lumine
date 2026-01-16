@@ -1,9 +1,7 @@
 #[derive(Debug, Clone)]
 pub enum ConfigError {
   FileRead(String),
-  FileWrite(String),
   Parse(String),
-  Serialize(String),
 }
 
 impl std::error::Error for ConfigError {}
@@ -18,24 +16,10 @@ impl std::fmt::Display for ConfigError {
           msg
         )
       }
-      ConfigError::FileWrite(msg) => {
-        write!(
-          f,
-          "Cannot save configuration file: {}. Please check permissions and available disk space.",
-          msg
-        )
-      }
       ConfigError::Parse(msg) => {
         write!(
           f,
           "Configuration file is invalid: {}. Please check the syntax and ensure all required fields are present.",
-          msg
-        )
-      }
-      ConfigError::Serialize(msg) => {
-        write!(
-          f,
-          "Failed to process configuration: {}. Please check your configuration values.",
           msg
         )
       }
