@@ -37,17 +37,17 @@ fn test_config_default() {
   assert_eq!(config.get_silence_limit(), 2);
   assert_eq!(config.get_silence_detect_noise(), 40);
   assert_eq!(config.get_preferred_audio_input_device(), "");
-  assert_eq!(config.get_remove_after_transcript(), true);
-  assert_eq!(config.get_verbose(), true);
+  assert!(config.get_remove_after_transcript());
+  assert!(config.get_verbose());
 }
 
 #[test]
 fn test_config_load_default() {
   let config = Config::load().unwrap();
   assert_eq!(config.get_whisper_url(), "http://127.0.0.1:9090");
-  assert_eq!(config.get_verbose(), true);
+  assert!(config.get_verbose());
   assert_eq!(config.get_recordings_directory(), "recordings");
-  assert_eq!(config.get_remove_after_transcript(), true);
+  assert!(config.get_remove_after_transcript());
   assert_eq!(config.get_silence_limit(), 2);
   assert_eq!(config.get_silence_detect_noise(), 40);
   assert_eq!(config.get_preferred_audio_input_device(), "");
@@ -88,8 +88,8 @@ fn test_parse_config_content() {
   assert_eq!(config.get_silence_limit(), 5);
   assert_eq!(config.get_silence_detect_noise(), 30);
   assert_eq!(config.get_preferred_audio_input_device(), "test_device");
-  assert_eq!(config.get_remove_after_transcript(), false);
-  assert_eq!(config.get_verbose(), false);
+  assert!(!config.get_remove_after_transcript());
+  assert!(!config.get_verbose());
 }
 
 #[test]
