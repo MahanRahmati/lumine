@@ -2,7 +2,15 @@ name: ci
 
 on:
   pull_request: {}
-  push: { branches: [main] }
+  push:
+    branches: [main]
+    paths-ignore:
+      - '.github/**'
+      - 'sample/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'LICENSE'
+      - '*.md'
 
 jobs:
   test:
@@ -65,4 +73,3 @@ jobs:
           name: lumine-macos
           path: target/release/lumine
           retention-days: 30
-
