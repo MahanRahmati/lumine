@@ -54,7 +54,10 @@ fn main() {
   };
 
   if config.get_remove_after_transcript() {
-    let _ = remove_file(&file_path.clone(), config.get_verbose());
+    let result = remove_file(&file_path.clone());
+    if result.is_ok() && config.get_verbose() {
+      println!("File removed: {}", file_path);
+    }
   }
 
   println!("{}", transcript);

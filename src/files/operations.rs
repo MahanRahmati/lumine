@@ -1,19 +1,12 @@
-use super::errors::{FileError, FileResult};
 use std::path::Path;
 
-pub fn remove_file(file_path: &str, verbose: bool) -> FileResult<()> {
-  let path = Path::new(file_path);
+use crate::files::errors::{FileError, FileResult};
 
+pub fn remove_file(file_path: &str) -> FileResult<()> {
+  let path = Path::new(file_path);
   match std::fs::remove_file(path) {
-    Ok(_) => {
-      if verbose {
-        println!("File removed: {}", file_path);
-      }
-      return Ok(());
-    }
-    Err(e) => {
-      return Err(FileError::FileRemove(e.to_string()));
-    }
+    Ok(_) => return Ok(()),
+    Err(e) => return Err(FileError::FileRemove(e.to_string())),
   }
 }
 
@@ -32,7 +25,7 @@ pub fn validate_file_exists(file_path: &str) -> FileResult<()> {
 }
 
 pub fn file_exists(file_path: &str) -> bool {
-  Path::new(file_path).exists()
+  return Path::new(file_path).exists();
 }
 
 pub fn read_to_string(file_path: &str) -> FileResult<String> {
