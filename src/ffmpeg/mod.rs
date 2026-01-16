@@ -1,6 +1,9 @@
 mod devices;
 mod errors;
 
+#[cfg(test)]
+mod ffmpeg_tests;
+
 use super::files::operations;
 use std::io::BufRead;
 use std::os::unix::process::ExitStatusExt;
@@ -108,7 +111,7 @@ impl FFMPEG {
     return Err(FFMPEGError::CouldNotExecute);
   }
 
-  fn select_audio_input_device(
+  pub(crate) fn select_audio_input_device(
     &self,
     devices: AudioInputDevices,
   ) -> AudioInputDevice {
