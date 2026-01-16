@@ -2,15 +2,16 @@ mod cli;
 mod config;
 mod ffmpeg;
 mod files;
+mod network;
 mod whisper;
+
+use clap::Parser;
 
 use crate::cli::Cli;
 use crate::config::Config;
 use crate::ffmpeg::FFMPEG;
 use crate::files::operations::remove_file;
 use crate::whisper::Whisper;
-
-use clap::Parser;
 
 fn main() {
   let _cli = Cli::parse();
