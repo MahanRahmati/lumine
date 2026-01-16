@@ -5,10 +5,10 @@ mod config_tests;
 
 use std::path::PathBuf;
 
+use xdg::BaseDirectories;
+
 use crate::config::errors::{ConfigError, ConfigResult};
 use crate::files::operations;
-
-use xdg::BaseDirectories;
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct Config {

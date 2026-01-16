@@ -4,7 +4,6 @@ mod errors;
 #[cfg(test)]
 mod ffmpeg_tests;
 
-use super::files::operations;
 use std::io::BufRead;
 use std::os::unix::process::ExitStatusExt;
 use std::process::{Command, Stdio};
@@ -17,6 +16,7 @@ use regex::Regex;
 
 use crate::ffmpeg::devices::{AudioInputDevice, AudioInputDevices};
 use crate::ffmpeg::errors::{FFMPEGError, FFMPEGResult};
+use crate::files::operations;
 
 #[derive(Debug, Clone)]
 pub struct FFMPEG {
