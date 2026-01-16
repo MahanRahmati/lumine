@@ -33,7 +33,7 @@ impl Config {
   pub fn load() -> Result<Config, ConfigError> {
     let xdg_dirs = BaseDirectories::with_prefix("lumine");
 
-    let config_path = match xdg_dirs.find_config_file("lumine.toml") {
+    let config_path = match xdg_dirs.find_config_file("config.toml") {
       Some(path) => path,
       None => {
         let default_config = Config::default();
