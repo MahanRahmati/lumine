@@ -26,3 +26,5 @@ impl std::fmt::Display for ConfigError {
     }
   }
 }
+
+pub type ConfigResult<T> = Result<T, ConfigError>;

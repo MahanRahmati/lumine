@@ -1,7 +1,14 @@
-use super::files::operations;
+use std::path::PathBuf;
+
+use crate::config::errors::{ConfigError, ConfigResult};
+use crate::files::operations;
+
 use xdg::BaseDirectories;
 
 pub mod errors;
+
+#[cfg(test)]
+mod config_tests;
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct Config {
@@ -30,9 +37,8 @@ pub struct GeneralConfig {
 }
 
 impl Config {
-  pub fn load() -> Result<Config, ConfigError> {
+  pub fn load() -> ConfigResult<Config> {
     let xdg_dirs = BaseDirectories::with_prefix("lumine");
-
     let config_path = match xdg_dirs.find_config_file("config.toml") {
       Some(path) => path,
       None => {
@@ -40,22 +46,8 @@ impl Config {
         return Ok(default_config);
       }
     };
-
-    let config_content =
-      match operations::read_to_string(&config_path.to_string_lossy()) {
-        Ok(content) => content,
-        Err(e) => {
-          return Err(ConfigError::FileRead(e.to_string()));
-        }
-      };
-
-    let config: Config = match toml::from_str(&config_content) {
-      Ok(config) => config,
-      Err(e) => {
-        return Err(ConfigError::Parse(e.to_string()));
-      }
-    };
-
+    let config_content = get_config_content(config_path)?;
+    let config = parse_config_content(config_content)?;
     return Ok(config);
   }
 
@@ -96,7 +88,23 @@ impl Config {
   }
 }
 
-pub use errors::ConfigError;
+fn get_config_content(config_path: PathBuf) -> ConfigResult<String> {
+  match operations::read_to_string(&config_path.to_string_lossy()) {
+    Ok(content) => return Ok(content),
+    Err(e) => {
+      return Err(ConfigError::FileRead(e.to_string()));
+    }
+  };
+}
+
+fn parse_config_content(config_content: String) -> ConfigResult<Config> {
+  match toml::from_str(&config_content) {
+    Ok(config) => return Ok(config),
+    Err(e) => {
+      return Err(ConfigError::Parse(e.to_string()));
+    }
+  };
+}
 
 impl Default for Config {
   fn default() -> Self {
