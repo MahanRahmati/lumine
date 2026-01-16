@@ -106,17 +106,35 @@ impl Whisper {
       println!("Checking if Whisper service URL is reachable...");
     }
 
+    let _url = match reqwest::Url::parse(&self.url) {
+      Ok(url) => url,
+      Err(e) => {
+        if self.verbose {
+          println!("Invalid URL format: {}", e);
+        }
+        return Err(WhisperError::InvalidURL);
+      }
+    };
+
     let client = reqwest::blocking::Client::new();
 
-    let response = match client.get(self.url.clone()).send() {
+    let response = match client.get(&self.url).send() {
       Ok(response) => response,
-      Err(_) => return Err(WhisperError::InvalidURL),
+      Err(e) => {
+        if self.verbose {
+          println!("Failed to connect to URL: {}", e);
+        }
+        return Err(WhisperError::RequestFailed);
+      }
     };
 
     let status = response.status();
     if status != reqwest::StatusCode::OK
       && status != reqwest::StatusCode::NOT_FOUND
     {
+      if self.verbose {
+        println!("URL returned unexpected status: {}", status);
+      }
       return Err(WhisperError::InvalidURL);
     }
 
