@@ -9,18 +9,20 @@ impl AudioInputDevice {
     return AudioInputDevice { index, name };
   }
 
-  pub fn default() -> Self {
-    return AudioInputDevice::new(
-      String::from("default"),
-      String::from("default"),
-    );
-  }
-
   pub fn get_index(&self) -> &String {
     return &self.index;
   }
   pub fn get_name(&self) -> &String {
     return &self.name;
+  }
+}
+
+impl Default for AudioInputDevice {
+  fn default() -> Self {
+    return AudioInputDevice::new(
+      String::from("default"),
+      String::from("default"),
+    );
   }
 }
 
