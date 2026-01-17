@@ -33,7 +33,11 @@ verbose = false
 fn test_config_default() {
   let config = Config::default();
   assert_eq!(config.get_whisper_url(), "http://127.0.0.1:9090");
-  assert_eq!(config.get_recordings_directory(), "recordings");
+  let recordings_dir = config.get_recordings_directory();
+  assert!(recordings_dir.contains("recordings"));
+  assert!(
+    recordings_dir.contains(".local") || recordings_dir.contains("share")
+  );
   assert_eq!(config.get_silence_limit(), 2);
   assert_eq!(config.get_silence_detect_noise(), 40);
   assert_eq!(config.get_preferred_audio_input_device(), "");

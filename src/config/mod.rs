@@ -60,11 +60,17 @@ impl Config {
   }
 
   pub fn get_recordings_directory(&self) -> String {
-    self
-      .ffmpeg
-      .recordings_directory
-      .clone()
-      .unwrap_or_else(|| String::from("recordings"))
+    if let Some(dir) = &self.ffmpeg.recordings_directory
+      && !dir.is_empty()
+    {
+      return dir.clone();
+    }
+
+    let xdg_dirs = BaseDirectories::with_prefix("lumine");
+    xdg_dirs
+      .create_data_directory("recordings")
+      .map(|path| path.to_string_lossy().to_string())
+      .unwrap_or_else(|_| String::from("recordings"))
   }
 
   pub fn get_remove_after_transcript(&self) -> bool {
@@ -113,7 +119,7 @@ impl Default for Config {
         url: String::from("http://127.0.0.1:9090"),
       },
       ffmpeg: FFMPEGConfig {
-        recordings_directory: Some(String::from("recordings")),
+        recordings_directory: Some(String::new()),
         silence_limit: Some(2),
         silence_detect_noise: Some(40),
         preferred_audio_input_device: Some(String::new()),

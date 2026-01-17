@@ -33,7 +33,7 @@ The configuration file is loaded from XDG configuration directory.
 url = "http://127.0.0.1:9090"
 
 [ffmpeg]
-recordings_directory = "recordings"
+recordings_directory = ""
 silence_limit = 2
 silence_detect_noise = 40
 preferred_audio_input_device = ""
