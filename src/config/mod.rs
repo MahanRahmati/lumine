@@ -37,7 +37,7 @@ pub struct GeneralConfig {
 }
 
 impl Config {
-  pub fn load() -> ConfigResult<Config> {
+  pub async fn load() -> ConfigResult<Config> {
     let xdg_dirs = BaseDirectories::with_prefix("lumine");
     let config_path = match xdg_dirs.find_config_file("config.toml") {
       Some(path) => path,
@@ -46,7 +46,7 @@ impl Config {
         return Ok(default_config);
       }
     };
-    let config_content = get_config_content(config_path)?;
+    let config_content = get_config_content(config_path).await?;
     let config = parse_config_content(config_content)?;
     return Ok(config);
   }
@@ -94,8 +94,8 @@ impl Config {
   }
 }
 
-fn get_config_content(config_path: PathBuf) -> ConfigResult<String> {
-  match operations::read_to_string(&config_path.to_string_lossy()) {
+async fn get_config_content(config_path: PathBuf) -> ConfigResult<String> {
+  match operations::read_to_string(&config_path.to_string_lossy()).await {
     Ok(content) => return Ok(content),
     Err(e) => {
       return Err(ConfigError::FileRead(e.to_string()));

@@ -3,7 +3,7 @@ mod errors;
 #[cfg(test)]
 mod whisper_tests;
 
-use reqwest::blocking::multipart;
+use reqwest::multipart;
 
 use crate::files::operations;
 use crate::network::{HttpClient, errors::NetworkError};
@@ -30,23 +30,26 @@ impl Whisper {
     };
   }
 
-  pub fn send_audio(&self) -> WhisperResult<String> {
+  pub async fn send_audio(&self) -> WhisperResult<String> {
     if self.verbose {
       println!("Sending audio file to Whisper transcription service...");
     }
-    let response = self.send_audio_file_to_whisper()?;
+    let response = self.send_audio_file_to_whisper().await?;
     if self.verbose {
       println!("Transcription completed successfully.");
     }
     return Ok(response.text);
   }
 
-  fn send_audio_file_to_whisper(&self) -> WhisperResult<WhisperResponse> {
+  async fn send_audio_file_to_whisper(&self) -> WhisperResult<WhisperResponse> {
     if self.verbose {
       println!("Validating file path...");
     }
 
-    if operations::validate_file_exists(&self.file_path).is_err() {
+    if operations::validate_file_exists(&self.file_path)
+      .await
+      .is_err()
+    {
       return Err(WhisperError::FileNotFound);
     }
 
@@ -54,17 +57,29 @@ impl Whisper {
       println!("Preparing multipart form for audio file upload...");
     }
 
-    let form = match multipart::Form::new()
-      .text("response_format", "json")
-      .file("file", &self.file_path)
-    {
-      Ok(form) => form,
+    let file_bytes = match tokio::fs::read(&self.file_path).await {
+      Ok(bytes) => bytes,
       Err(_) => return Err(WhisperError::RequestFailed),
     };
 
+    let file_part = multipart::Part::bytes(file_bytes).file_name(
+      std::path::Path::new(&self.file_path)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("audio.wav")
+        .to_string(),
+    );
+
+    let form = multipart::Form::new()
+      .text("response_format", "json")
+      .part("file", file_part);
+
     let client = HttpClient::new(self.url.clone(), self.verbose);
 
-    match client.post_with_form::<WhisperResponse>(form, "inference") {
+    match client
+      .post_with_form::<WhisperResponse>(form, "inference")
+      .await
+    {
       Ok(response) => return Ok(response),
       Err(network_error) => {
         let whisper_error = match network_error {

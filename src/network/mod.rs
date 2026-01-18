@@ -1,6 +1,6 @@
 pub mod errors;
 
-use reqwest::blocking::multipart;
+use reqwest::multipart;
 
 use crate::network::errors::{NetworkError, NetworkResult};
 
@@ -15,7 +15,7 @@ impl HttpClient {
     return HttpClient { base_url, verbose };
   }
 
-  pub fn post_with_form<T>(
+  pub async fn post_with_form<T>(
     &self,
     form: multipart::Form,
     endpoint: &str,
@@ -23,16 +23,16 @@ impl HttpClient {
   where
     T: serde::de::DeserializeOwned,
   {
-    self.check_url()?;
+    self.check_url().await?;
 
-    let client = reqwest::blocking::Client::new();
+    let client = reqwest::Client::new();
     let full_url = format!("{}/{}", self.base_url, endpoint);
 
     if self.verbose {
       println!("Sending POST request to: {}", full_url);
     }
 
-    let response = match client.post(&full_url).multipart(form).send() {
+    let response = match client.post(&full_url).multipart(form).send().await {
       Ok(response) => response,
       Err(_) => return Err(NetworkError::RequestFailed),
     };
@@ -48,7 +48,7 @@ impl HttpClient {
       return Err(NetworkError::ResponseError);
     }
 
-    let response_text = match response.text() {
+    let response_text = match response.text().await {
       Ok(text) => text,
       Err(_) => return Err(NetworkError::DecodeError),
     };
@@ -61,7 +61,7 @@ impl HttpClient {
     return Ok(parsed_response);
   }
 
-  fn check_url(&self) -> NetworkResult<()> {
+  async fn check_url(&self) -> NetworkResult<()> {
     if self.verbose {
       println!("Checking if service URL is reachable...");
     }
@@ -76,9 +76,9 @@ impl HttpClient {
       }
     };
 
-    let client = reqwest::blocking::Client::new();
+    let client = reqwest::Client::new();
 
-    let response = match client.get(&self.base_url).send() {
+    let response = match client.get(&self.base_url).send().await {
       Ok(response) => response,
       Err(e) => {
         if self.verbose {

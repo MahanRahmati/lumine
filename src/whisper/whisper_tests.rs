@@ -3,8 +3,8 @@ use std::fs;
 use crate::config::*;
 use crate::whisper::*;
 
-#[test]
-fn test_send_audio() {
+#[tokio::test]
+async fn test_send_audio() {
   let sample_file_path = "sample/jfk.wav";
 
   assert!(
@@ -19,7 +19,7 @@ fn test_send_audio() {
     config.get_verbose(),
   );
 
-  let result = whisper.send_audio();
+  let result = whisper.send_audio().await;
   match result {
     Ok(transcript) => {
       assert!(!transcript.is_empty());
@@ -33,8 +33,8 @@ fn test_send_audio() {
   }
 }
 
-#[test]
-fn test_send_audio_file_not_found() {
+#[tokio::test]
+async fn test_send_audio_file_not_found() {
   let config = Config::default();
   let whisper = Whisper::new(
     config.get_whisper_url(),
@@ -42,7 +42,7 @@ fn test_send_audio_file_not_found() {
     false,
   );
 
-  let result = whisper.send_audio();
+  let result = whisper.send_audio().await;
   assert!(result.is_err());
   match result.unwrap_err() {
     WhisperError::FileNotFound => (),
@@ -50,8 +50,8 @@ fn test_send_audio_file_not_found() {
   }
 }
 
-#[test]
-fn test_send_audio_with_sample_file_invalid_url() {
+#[tokio::test]
+async fn test_send_audio_with_sample_file_invalid_url() {
   let sample_file_path = "sample/jfk.wav";
 
   assert!(
@@ -65,7 +65,7 @@ fn test_send_audio_with_sample_file_invalid_url() {
     false,
   );
 
-  let result = whisper.send_audio();
+  let result = whisper.send_audio().await;
   assert!(result.is_err());
   match result.unwrap_err() {
     WhisperError::InvalidURL => (),

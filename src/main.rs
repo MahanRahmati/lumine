@@ -13,10 +13,11 @@ use crate::ffmpeg::FFMPEG;
 use crate::files::operations::{remove_file, validate_file_exists};
 use crate::whisper::Whisper;
 
-fn main() {
+#[tokio::main]
+async fn main() {
   let cli = Cli::parse();
 
-  let config = match Config::load() {
+  let config = match Config::load().await {
     Ok(config) => config,
     Err(e) => {
       eprintln!("Configuration Error: {}", e);
@@ -26,16 +27,16 @@ fn main() {
 
   match cli.command {
     Some(Commands::Transcribe { file }) => {
-      transcribe_file(&config, &file);
+      transcribe_file(&config, &file).await;
     }
     None => {
-      record_and_transcribe(&config);
+      record_and_transcribe(&config).await;
     }
   }
 }
 
-fn transcribe_file(config: &Config, file_path: &str) {
-  if let Err(e) = validate_file_exists(file_path) {
+async fn transcribe_file(config: &Config, file_path: &str) {
+  if let Err(e) = validate_file_exists(file_path).await {
     eprintln!("File Error: {}", e);
     std::process::exit(1);
   }
@@ -46,7 +47,7 @@ fn transcribe_file(config: &Config, file_path: &str) {
     config.get_verbose(),
   );
 
-  let transcript = match whisper.send_audio() {
+  let transcript = match whisper.send_audio().await {
     Ok(transcript) => transcript,
     Err(e) => {
       println!("Transcription Error: {}", e);
@@ -57,7 +58,7 @@ fn transcribe_file(config: &Config, file_path: &str) {
   println!("{}", transcript);
 }
 
-fn record_and_transcribe(config: &Config) {
+async fn record_and_transcribe(config: &Config) {
   let ffmpeg = FFMPEG::new(
     config.get_recordings_directory(),
     config.get_silence_limit(),
@@ -66,7 +67,7 @@ fn record_and_transcribe(config: &Config) {
     config.get_verbose(),
   );
 
-  let file_path = match ffmpeg.record_audio() {
+  let file_path = match ffmpeg.record_audio().await {
     Ok(file_path) => file_path,
     Err(e) => {
       eprintln!("Recording Error: {}", e);
@@ -80,7 +81,7 @@ fn record_and_transcribe(config: &Config) {
     config.get_verbose(),
   );
 
-  let transcript = match whisper.send_audio() {
+  let transcript = match whisper.send_audio().await {
     Ok(transcript) => transcript,
     Err(e) => {
       println!("Transcription Error: {}", e);
@@ -89,7 +90,7 @@ fn record_and_transcribe(config: &Config) {
   };
 
   if config.get_remove_after_transcript() {
-    let result = remove_file(&file_path.clone());
+    let result = remove_file(&file_path.clone()).await;
     if result.is_ok() && config.get_verbose() {
       println!("File removed: {}", file_path);
     }

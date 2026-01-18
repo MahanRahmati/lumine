@@ -16,8 +16,8 @@ fn test_get_audio_input_devices() {
   // TODO: Add the test.
 }
 
-#[test]
-fn test_select_audio_input_device() {
+#[tokio::test]
+async fn test_select_audio_input_device() {
   let config = Config::default();
   let ffmpeg = FFMPEG::new(
     config.get_recordings_directory(),
@@ -41,8 +41,8 @@ fn test_select_audio_input_device() {
   assert_eq!(selected_device.get_index(), "1");
 }
 
-#[test]
-fn test_select_audio_input_device_with_empty_strings() {
+#[tokio::test]
+async fn test_select_audio_input_device_with_empty_strings() {
   let config = Config::default();
   let ffmpeg = FFMPEG::new(
     config.get_recordings_directory(),
@@ -65,8 +65,8 @@ fn test_select_audio_input_device_with_empty_strings() {
   assert_eq!(selected_device.get_index(), "default");
 }
 
-#[test]
-fn test_select_audio_input_device_with_special_characters() {
+#[tokio::test]
+async fn test_select_audio_input_device_with_special_characters() {
   let config = Config::default();
   let ffmpeg = FFMPEG::new(
     config.get_recordings_directory(),
@@ -92,8 +92,8 @@ fn test_select_audio_input_device_with_special_characters() {
   assert_eq!(selected_device.get_index(), "0");
 }
 
-#[test]
-fn test_select_audio_input_device_with_multiple_matches() {
+#[tokio::test]
+async fn test_select_audio_input_device_with_multiple_matches() {
   let config = Config::default();
   let ffmpeg = FFMPEG::new(
     config.get_recordings_directory(),

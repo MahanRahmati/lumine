@@ -44,11 +44,11 @@ impl FFMPEG {
     };
   }
 
-  pub fn record_audio(&self) -> FFMPEGResult<String> {
+  pub async fn record_audio(&self) -> FFMPEGResult<String> {
     self.check_ffmpeg()?;
-    let devices = self.get_audio_input_devices()?;
+    let devices = self.get_audio_input_devices().await?;
     let device = self.select_audio_input_device(devices);
-    return self.record_audio_with_device(device);
+    return self.record_audio_with_device(device).await;
   }
 
   fn check_ffmpeg(&self) -> FFMPEGResult<bool> {
@@ -67,7 +67,7 @@ impl FFMPEG {
     return Err(FFMPEGError::NotFound);
   }
 
-  fn get_audio_input_devices(&self) -> FFMPEGResult<AudioInputDevices> {
+  async fn get_audio_input_devices(&self) -> FFMPEGResult<AudioInputDevices> {
     let output = Command::new("ffmpeg")
       .args(["-f", "avfoundation", "-list_devices", "true", "-i", ""])
       .output();
@@ -148,11 +148,14 @@ impl FFMPEG {
     return default_device;
   }
 
-  fn record_audio_with_device(
+  async fn record_audio_with_device(
     &self,
     device: AudioInputDevice,
   ) -> FFMPEGResult<String> {
-    if operations::create_directory_all(&self.recordings_directory).is_err() {
+    if operations::create_directory_all(&self.recordings_directory)
+      .await
+      .is_err()
+    {
       return Err(FFMPEGError::CouldNotCreateDirectory);
     }
 

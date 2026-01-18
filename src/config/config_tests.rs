@@ -45,23 +45,23 @@ fn test_config_default() {
   assert!(!config.get_verbose());
 }
 
-#[test]
-fn test_get_config_content() {
+#[tokio::test]
+async fn test_get_config_content() {
   let temp_dir = std::env::temp_dir();
   let config_path = temp_dir.join("test_config.toml");
   std::fs::write(&config_path, VALID_CONFIG).unwrap();
 
-  let result = get_config_content(config_path);
+  let result = get_config_content(config_path).await;
   assert!(result.is_ok());
   assert_eq!(result.unwrap(), VALID_CONFIG);
 
   std::fs::remove_file(temp_dir.join("test_config.toml")).unwrap();
 }
 
-#[test]
-fn test_get_config_content_with_wrong_path() {
+#[tokio::test]
+async fn test_get_config_content_with_wrong_path() {
   let wrong_path = std::path::PathBuf::from("/non-existent-path/config.toml");
-  let result = get_config_content(wrong_path);
+  let result = get_config_content(wrong_path).await;
   assert!(result.is_err());
   match result.unwrap_err() {
     ConfigError::FileRead(_) => (),
