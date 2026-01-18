@@ -1,30 +1,16 @@
-#[derive(Debug, Clone)]
+use thiserror::Error;
+
+#[derive(Error, Debug)]
 pub enum ConfigError {
+  #[error(
+    "Cannot read configuration file: {0}. Please check file permissions and ensure the file exists."
+  )]
   FileRead(String),
+
+  #[error(
+    "Configuration file is invalid: {0}. Please check the syntax and ensure all required fields are present."
+  )]
   Parse(String),
-}
-
-impl std::error::Error for ConfigError {}
-
-impl std::fmt::Display for ConfigError {
-  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-    match self {
-      ConfigError::FileRead(msg) => {
-        write!(
-          f,
-          "Cannot read configuration file: {}. Please check file permissions and ensure the file exists.",
-          msg
-        )
-      }
-      ConfigError::Parse(msg) => {
-        write!(
-          f,
-          "Configuration file is invalid: {}. Please check the syntax and ensure all required fields are present.",
-          msg
-        )
-      }
-    }
-  }
 }
 
 pub type ConfigResult<T> = Result<T, ConfigError>;
