@@ -19,7 +19,7 @@ async fn test_send_audio() {
     config.get_verbose(),
   );
 
-  let result = whisper.send_audio().await;
+  let result = whisper.transcribe().await;
   match result {
     Ok(transcript) => {
       assert!(!transcript.is_empty());
@@ -42,7 +42,7 @@ async fn test_send_audio_file_not_found() {
     config.get_verbose(),
   );
 
-  let result = whisper.send_audio().await;
+  let result = whisper.transcribe().await;
   assert!(result.is_err());
   match result.unwrap_err() {
     WhisperError::FileNotFound => (),
@@ -66,7 +66,7 @@ async fn test_send_audio_with_sample_file_invalid_url() {
     config.get_verbose(),
   );
 
-  let result = whisper.send_audio().await;
+  let result = whisper.transcribe().await;
   assert!(result.is_err());
   match result.unwrap_err() {
     WhisperError::InvalidURL => (),

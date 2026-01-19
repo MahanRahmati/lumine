@@ -47,7 +47,7 @@ async fn transcribe_file(config: &Config, file_path: &str) {
     config.get_verbose(),
   );
 
-  let transcript = match whisper.send_audio().await {
+  let transcript = match whisper.transcribe().await {
     Ok(transcript) => transcript,
     Err(e) => {
       println!("Transcription Error: {}", e);
@@ -81,7 +81,7 @@ async fn record_and_transcribe(config: &Config) {
     config.get_verbose(),
   );
 
-  let transcript = match whisper.send_audio().await {
+  let transcript = match whisper.transcribe().await {
     Ok(transcript) => transcript,
     Err(e) => {
       println!("Transcription Error: {}", e);

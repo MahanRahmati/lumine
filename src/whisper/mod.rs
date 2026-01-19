@@ -30,7 +30,7 @@ impl Whisper {
     };
   }
 
-  pub async fn send_audio(&self) -> WhisperResult<String> {
+  pub async fn transcribe(&self) -> WhisperResult<String> {
     if self.verbose {
       println!("Sending audio file to Whisper transcription service...");
     }
