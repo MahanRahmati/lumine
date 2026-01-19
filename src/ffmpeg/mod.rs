@@ -184,112 +184,110 @@ impl FFMPEG {
         "-y",
       ])
       .stderr(Stdio::piped())
-      .spawn();
+      .spawn()
+      .map_err(|_| FFMPEGError::CouldNotExecute)?;
 
-    if let Ok(child) = output {
-      if self.verbose {
-        println!("Recording audio to: {}", output_file);
-      }
-
-      if self.verbose {
-        println!(
-          "Recording... will stop after {}s of silence",
-          self.silence_limit
-        );
-      }
-
-      let child = Arc::new(Mutex::new(child));
-      let child_clone = Arc::clone(&child);
-      let stderr = child.lock().unwrap().stderr.take();
-      if let Some(stderr) = stderr {
-        let mut reader = std::io::BufReader::new(stderr);
-
-        let should_kill = Arc::new(Mutex::new(true));
-        let should_kill_clone = Arc::clone(&should_kill);
-
-        let verbose = self.verbose;
-        let silence_limit = self.silence_limit;
-
-        let handle = task::spawn_blocking(move || {
-          let mut line = String::new();
-          let mut _timer: Option<JoinHandle<()>> = None;
-
-          while let Ok(n) = reader.read_line(&mut line) {
-            if n == 0 {
-              break;
-            }
-
-            if line.contains("silence_start") {
-              if verbose {
-                println!(
-                  "Possible silence detected... starting {}s countdown.",
-                  silence_limit
-                );
-              }
-
-              *should_kill.lock().unwrap() = true;
-
-              let child_for_timer = Arc::clone(&child_clone);
-              let kill_flag = Arc::clone(&should_kill_clone);
-              _timer = Some(tokio::spawn(async move {
-                tokio::time::sleep(Duration::from_secs(silence_limit as u64))
-                  .await;
-
-                // Check if we should still kill the process
-                if *kill_flag.lock().unwrap() {
-                  if verbose {
-                    println!("Silence limit reached. Stopping recording...");
-                  }
-                  let _ = child_for_timer.lock().unwrap().kill();
-                }
-              }));
-            }
-
-            if line.contains("silence_end") {
-              if verbose {
-                println!("Sound detected. Resetting silence timer.");
-              }
-              *should_kill.lock().unwrap() = false;
-              _timer = None;
-            }
-
-            line.clear();
-          }
-
-          if verbose {
-            println!("Recording ended.");
-          }
-        });
-
-        if handle.await.is_err() {
-          return Err(FFMPEGError::CouldNotReadOutput);
-        }
-
-        let result = child.lock().unwrap().wait();
-        if let Ok(status) = result {
-          if !status.success()
-            && status.code() != Some(255)
-            && status.signal() != Some(9)
-          {
-            if self.verbose {
-              println!("Process failed with exit code: {:?}", status.code());
-            }
-            return Err(FFMPEGError::CouldNotExecute);
-          }
-        } else {
-          return Err(FFMPEGError::CouldNotExecute);
-        }
-
-        if self.verbose {
-          println!("Recording saved to {}", output_file);
-        }
-
-        return Ok(output_file);
-      }
-
-      return Err(FFMPEGError::CouldNotReadOutput);
+    if self.verbose {
+      println!("Recording audio to: {}", output_file);
     }
 
-    return Err(FFMPEGError::CouldNotExecute);
+    if self.verbose {
+      println!(
+        "Recording... will stop after {}s of silence",
+        self.silence_limit
+      );
+    }
+
+    let child = Arc::new(Mutex::new(output));
+    let child_clone = Arc::clone(&child);
+    let stderr = child.lock().unwrap().stderr.take();
+
+    if let Some(stderr) = stderr {
+      let mut reader = std::io::BufReader::new(stderr);
+
+      let should_kill = Arc::new(Mutex::new(true));
+      let should_kill_clone = Arc::clone(&should_kill);
+
+      let verbose = self.verbose;
+      let silence_limit = self.silence_limit;
+
+      let handle = task::spawn_blocking(move || {
+        let mut line = String::new();
+        let mut _timer: Option<JoinHandle<()>> = None;
+
+        while let Ok(n) = reader.read_line(&mut line) {
+          if n == 0 {
+            break;
+          }
+
+          if line.contains("silence_start") {
+            if verbose {
+              println!(
+                "Possible silence detected... starting {}s countdown.",
+                silence_limit
+              );
+            }
+
+            *should_kill.lock().unwrap() = true;
+
+            let child_for_timer = Arc::clone(&child_clone);
+            let kill_flag = Arc::clone(&should_kill_clone);
+            _timer = Some(tokio::spawn(async move {
+              tokio::time::sleep(Duration::from_secs(silence_limit as u64))
+                .await;
+
+              // Check if we should still kill the process
+              if *kill_flag.lock().unwrap() {
+                if verbose {
+                  println!("Silence limit reached. Stopping recording...");
+                }
+                let _ = child_for_timer.lock().unwrap().kill();
+              }
+            }));
+          }
+
+          if line.contains("silence_end") {
+            if verbose {
+              println!("Sound detected. Resetting silence timer.");
+            }
+            *should_kill.lock().unwrap() = false;
+            _timer = None;
+          }
+
+          line.clear();
+        }
+
+        if verbose {
+          println!("Recording ended.");
+        }
+      });
+
+      if handle.await.is_err() {
+        return Err(FFMPEGError::CouldNotReadOutput);
+      }
+
+      let result = child.lock().unwrap().wait();
+      if let Ok(status) = result {
+        if !status.success()
+          && status.code() != Some(255)
+          && status.signal() != Some(9)
+        {
+          if self.verbose {
+            println!("Process failed with exit code: {:?}", status.code());
+          }
+          return Err(FFMPEGError::CouldNotExecute);
+        }
+      } else {
+        return Err(FFMPEGError::CouldNotExecute);
+      }
+
+      if self.verbose {
+        println!("Recording saved to {}", output_file);
+      }
+
+      return Ok(output_file);
+    }
+
+    return Err(FFMPEGError::CouldNotReadOutput);
   }
 }
