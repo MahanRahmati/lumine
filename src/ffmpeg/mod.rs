@@ -55,17 +55,16 @@ impl FFMPEG {
     let output = tokio::process::Command::new("ffmpeg")
       .args(["-version"])
       .output()
-      .await;
+      .await
+      .map_err(|_| FFMPEGError::NotFound)?;
 
-    if let Ok(output) = output {
-      let output_str = String::from_utf8_lossy(&output.stdout);
-      for line in output_str.lines() {
-        if line.contains("ffmpeg version") {
-          if self.verbose {
-            println!("Found ffmpeg: {}", line);
-          }
-          return Ok(true);
+    let output_str = String::from_utf8_lossy(&output.stdout);
+    for line in output_str.lines() {
+      if line.contains("ffmpeg version") {
+        if self.verbose {
+          println!("Found ffmpeg: {}", line);
         }
+        return Ok(true);
       }
     }
     return Err(FFMPEGError::NotFound);
@@ -75,45 +74,42 @@ impl FFMPEG {
     let output = tokio::process::Command::new("ffmpeg")
       .args(["-f", "avfoundation", "-list_devices", "true", "-i", ""])
       .output()
-      .await;
+      .await
+      .map_err(|_| FFMPEGError::CouldNotExecute)?;
 
-    if let Ok(output) = output {
-      let output_str = String::from_utf8_lossy(&output.stderr);
-      let mut audio_section = false;
-      let mut devices = Vec::new();
+    let output_str = String::from_utf8_lossy(&output.stderr);
+    let mut audio_section = false;
+    let mut devices = Vec::new();
 
-      let regex = Regex::new(r"\[(\d+)\]\s+(.*)").unwrap();
+    let regex = Regex::new(r"\[(\d+)\]\s+(.*)").unwrap();
 
-      for line in output_str.lines() {
-        if line.contains("AVFoundation audio devices") {
-          audio_section = true;
-          continue;
-        }
-
-        if audio_section
-          && let Some(caps) = regex.captures(line)
-          && caps.len() >= 3
-        {
-          let index = &caps[1];
-          let name = &caps[2];
-          devices.push(AudioInputDevice::new(
-            String::from(index),
-            String::from(name),
-          ));
-        }
+    for line in output_str.lines() {
+      if line.contains("AVFoundation audio devices") {
+        audio_section = true;
+        continue;
       }
 
-      if self.verbose {
-        println!("Audio Devices Found:");
-        for device in &devices {
-          println!("- {}", device.get_name());
-        }
+      if audio_section
+        && let Some(caps) = regex.captures(line)
+        && caps.len() >= 3
+      {
+        let index = &caps[1];
+        let name = &caps[2];
+        devices.push(AudioInputDevice::new(
+          String::from(index),
+          String::from(name),
+        ));
       }
-
-      return Ok(devices);
     }
 
-    return Err(FFMPEGError::CouldNotExecute);
+    if self.verbose {
+      println!("Audio Devices Found:");
+      for device in &devices {
+        println!("- {}", device.get_name());
+      }
+    }
+
+    return Ok(devices);
   }
 
   pub(crate) fn select_audio_input_device(
