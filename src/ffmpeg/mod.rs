@@ -270,17 +270,15 @@ impl FFMPEG {
     }
 
     let result = child.lock().unwrap().wait();
-    if let Ok(status) = result {
-      if !status.success()
-        && status.code() != Some(255)
-        && status.signal() != Some(9)
-      {
-        if self.verbose {
-          println!("Process failed with exit code: {:?}", status.code());
-        }
-        return Err(FFMPEGError::CouldNotExecute);
+    let status = result.map_err(|_| FFMPEGError::CouldNotExecute)?;
+
+    if !status.success()
+      && status.code() != Some(255)
+      && status.signal() != Some(9)
+    {
+      if self.verbose {
+        println!("Process failed with exit code: {:?}", status.code());
       }
-    } else {
       return Err(FFMPEGError::CouldNotExecute);
     }
 
