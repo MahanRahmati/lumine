@@ -8,11 +8,11 @@ use std::io::BufRead;
 use std::os::unix::process::ExitStatusExt;
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
-use std::thread;
-use std::thread::JoinHandle;
 use std::time::Duration;
 
 use regex::Regex;
+use tokio::task;
+use tokio::task::JoinHandle;
 
 use crate::ffmpeg::devices::{AudioInputDevice, AudioInputDevices};
 use crate::ffmpeg::errors::{FFMPEGError, FFMPEGResult};
@@ -209,7 +209,7 @@ impl FFMPEG {
         let verbose = self.verbose;
         let silence_limit = self.silence_limit;
 
-        let handle = thread::spawn(move || {
+        let handle = task::spawn_blocking(move || {
           let mut line = String::new();
           let mut _timer: Option<JoinHandle<()>> = None;
 
@@ -230,8 +230,9 @@ impl FFMPEG {
 
               let child_for_timer = Arc::clone(&child_clone);
               let kill_flag = Arc::clone(&should_kill_clone);
-              _timer = Some(thread::spawn(move || {
-                thread::sleep(Duration::from_secs(silence_limit as u64));
+              _timer = Some(tokio::spawn(async move {
+                tokio::time::sleep(Duration::from_secs(silence_limit as u64))
+                  .await;
 
                 // Check if we should still kill the process
                 if *kill_flag.lock().unwrap() {
@@ -259,7 +260,7 @@ impl FFMPEG {
           }
         });
 
-        if handle.join().is_err() {
+        if handle.await.is_err() {
           return Err(FFMPEGError::CouldNotReadOutput);
         }
 
