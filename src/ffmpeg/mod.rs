@@ -153,12 +153,9 @@ impl FFMPEG {
     &self,
     device: AudioInputDevice,
   ) -> FFMPEGResult<String> {
-    if operations::create_directory_all(&self.recordings_directory)
+    operations::create_directory_all(&self.recordings_directory)
       .await
-      .is_err()
-    {
-      return Err(FFMPEGError::CouldNotCreateDirectory);
-    }
+      .map_err(|_| FFMPEGError::CouldNotCreateDirectory)?;
 
     let timestamp = chrono::Local::now().format("%Y-%m-%d_%H-%M-%S");
     let output_file = format!(

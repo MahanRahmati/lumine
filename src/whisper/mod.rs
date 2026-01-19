@@ -46,21 +46,17 @@ impl Whisper {
       println!("Validating file path...");
     }
 
-    if operations::validate_file_exists(&self.file_path)
+    operations::validate_file_exists(&self.file_path)
       .await
-      .is_err()
-    {
-      return Err(WhisperError::FileNotFound);
-    }
+      .map_err(|_| WhisperError::FileNotFound)?;
 
     if self.verbose {
       println!("Preparing multipart form for audio file upload...");
     }
 
-    let file_bytes = match tokio::fs::read(&self.file_path).await {
-      Ok(bytes) => bytes,
-      Err(_) => return Err(WhisperError::RequestFailed),
-    };
+    let file_bytes = tokio::fs::read(&self.file_path)
+      .await
+      .map_err(|_| WhisperError::RequestFailed)?;
 
     let file_part = multipart::Part::bytes(file_bytes).file_name(
       std::path::Path::new(&self.file_path)

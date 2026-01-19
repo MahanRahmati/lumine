@@ -99,21 +99,14 @@ impl Config {
 }
 
 async fn get_config_content(config_path: PathBuf) -> ConfigResult<String> {
-  match operations::read_to_string(&config_path.to_string_lossy()).await {
-    Ok(content) => return Ok(content),
-    Err(e) => {
-      return Err(ConfigError::FileRead(e.to_string()));
-    }
-  };
+  return operations::read_to_string(&config_path.to_string_lossy())
+    .await
+    .map_err(|e| ConfigError::FileRead(e.to_string()));
 }
 
 fn parse_config_content(config_content: String) -> ConfigResult<Config> {
-  match toml::from_str(&config_content) {
-    Ok(config) => return Ok(config),
-    Err(e) => {
-      return Err(ConfigError::Parse(e.to_string()));
-    }
-  };
+  return toml::from_str(&config_content)
+    .map_err(|e| ConfigError::Parse(e.to_string()));
 }
 
 impl Default for Config {

@@ -32,10 +32,12 @@ impl HttpClient {
       println!("Sending POST request to: {}", full_url);
     }
 
-    let response = match client.post(&full_url).multipart(form).send().await {
-      Ok(response) => response,
-      Err(_) => return Err(NetworkError::RequestFailed),
-    };
+    let response = client
+      .post(&full_url)
+      .multipart(form)
+      .send()
+      .await
+      .map_err(|_| NetworkError::RequestFailed)?;
 
     if self.verbose {
       println!(
@@ -48,15 +50,13 @@ impl HttpClient {
       return Err(NetworkError::ResponseError);
     }
 
-    let response_text = match response.text().await {
-      Ok(text) => text,
-      Err(_) => return Err(NetworkError::DecodeError),
-    };
+    let response_text = response
+      .text()
+      .await
+      .map_err(|_| NetworkError::DecodeError)?;
 
-    let parsed_response: T = match serde_json::from_str(&response_text) {
-      Ok(response) => response,
-      Err(_) => return Err(NetworkError::DecodeError),
-    };
+    let parsed_response: T = serde_json::from_str(&response_text)
+      .map_err(|_| NetworkError::DecodeError)?;
 
     return Ok(parsed_response);
   }
@@ -66,27 +66,21 @@ impl HttpClient {
       println!("Checking if service URL is reachable...");
     }
 
-    let _url = match reqwest::Url::parse(&self.base_url) {
-      Ok(url) => url,
-      Err(e) => {
-        if self.verbose {
-          println!("Invalid URL format: {}", e);
-        }
-        return Err(NetworkError::InvalidURL);
+    let _url = reqwest::Url::parse(&self.base_url).map_err(|e| {
+      if self.verbose {
+        println!("Invalid URL format: {}", e);
       }
-    };
+      NetworkError::InvalidURL
+    })?;
 
     let client = reqwest::Client::new();
 
-    let response = match client.get(&self.base_url).send().await {
-      Ok(response) => response,
-      Err(e) => {
-        if self.verbose {
-          println!("Failed to connect to URL: {}", e);
-        }
-        return Err(NetworkError::RequestFailed);
+    let response = client.get(&self.base_url).send().await.map_err(|e| {
+      if self.verbose {
+        println!("Failed to connect to URL: {}", e);
       }
-    };
+      NetworkError::RequestFailed
+    })?;
 
     let status = response.status();
     if status != reqwest::StatusCode::OK
