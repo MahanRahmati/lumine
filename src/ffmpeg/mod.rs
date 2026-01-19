@@ -45,14 +45,18 @@ impl FFMPEG {
   }
 
   pub async fn record_audio(&self) -> FFMPEGResult<String> {
-    self.check_ffmpeg()?;
+    self.check_ffmpeg().await?;
     let devices = self.get_audio_input_devices().await?;
     let device = self.select_audio_input_device(devices);
     return self.record_audio_with_device(device).await;
   }
 
-  fn check_ffmpeg(&self) -> FFMPEGResult<bool> {
-    let output = Command::new("ffmpeg").args(["-version"]).output();
+  async fn check_ffmpeg(&self) -> FFMPEGResult<bool> {
+    let output = tokio::process::Command::new("ffmpeg")
+      .args(["-version"])
+      .output()
+      .await;
+
     if let Ok(output) = output {
       let output_str = String::from_utf8_lossy(&output.stdout);
       for line in output_str.lines() {
@@ -68,9 +72,10 @@ impl FFMPEG {
   }
 
   async fn get_audio_input_devices(&self) -> FFMPEGResult<AudioInputDevices> {
-    let output = Command::new("ffmpeg")
+    let output = tokio::process::Command::new("ffmpeg")
       .args(["-f", "avfoundation", "-list_devices", "true", "-i", ""])
-      .output();
+      .output()
+      .await;
 
     if let Ok(output) = output {
       let output_str = String::from_utf8_lossy(&output.stderr);
