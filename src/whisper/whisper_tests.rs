@@ -39,7 +39,7 @@ async fn test_send_audio_file_not_found() {
   let whisper = Whisper::new(
     config.get_whisper_url(),
     "nonexistent_file.wav".to_string(),
-    false,
+    config.get_verbose(),
   );
 
   let result = whisper.send_audio().await;
@@ -59,10 +59,11 @@ async fn test_send_audio_with_sample_file_invalid_url() {
     "Sample file should exist"
   );
 
+  let config = Config::default();
   let whisper = Whisper::new(
     "invalid-url".to_string(),
     sample_file_path.to_string(),
-    false,
+    config.get_verbose(),
   );
 
   let result = whisper.send_audio().await;

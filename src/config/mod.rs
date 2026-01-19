@@ -19,7 +19,7 @@ pub struct Config {
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct WhisperConfig {
-  pub url: String,
+  pub url: Option<String>,
 }
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
@@ -52,11 +52,15 @@ impl Config {
   }
 
   pub fn get_whisper_url(&self) -> String {
-    self.whisper.url.clone()
+    return self
+      .whisper
+      .url
+      .clone()
+      .unwrap_or(String::from("http://127.0.0.1:9090"));
   }
 
   pub fn get_verbose(&self) -> bool {
-    self.general.verbose.unwrap_or(false)
+    return self.general.verbose.unwrap_or(false);
   }
 
   pub fn get_recordings_directory(&self) -> String {
@@ -67,30 +71,30 @@ impl Config {
     }
 
     let xdg_dirs = BaseDirectories::with_prefix("lumine");
-    xdg_dirs
+    return xdg_dirs
       .create_data_directory("recordings")
       .map(|path| path.to_string_lossy().to_string())
-      .unwrap_or_else(|_| String::from("recordings"))
+      .unwrap_or_else(|_| String::from("recordings"));
   }
 
   pub fn get_remove_after_transcript(&self) -> bool {
-    self.general.remove_after_transcript.unwrap_or(true)
+    return self.general.remove_after_transcript.unwrap_or(true);
   }
 
   pub fn get_silence_limit(&self) -> i32 {
-    self.ffmpeg.silence_limit.unwrap_or(2)
+    return self.ffmpeg.silence_limit.unwrap_or(2);
   }
 
   pub fn get_silence_detect_noise(&self) -> i32 {
-    self.ffmpeg.silence_detect_noise.unwrap_or(40)
+    return self.ffmpeg.silence_detect_noise.unwrap_or(40);
   }
 
   pub fn get_preferred_audio_input_device(&self) -> String {
-    self
+    return self
       .ffmpeg
       .preferred_audio_input_device
       .clone()
-      .unwrap_or_default()
+      .unwrap_or_default();
   }
 }
 
@@ -116,7 +120,7 @@ impl Default for Config {
   fn default() -> Self {
     return Config {
       whisper: WhisperConfig {
-        url: String::from("http://127.0.0.1:9090"),
+        url: Some(String::from("http://127.0.0.1:9090")),
       },
       ffmpeg: FFMPEGConfig {
         recordings_directory: Some(String::new()),
