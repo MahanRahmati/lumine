@@ -236,7 +236,6 @@ impl FFMPEG {
           _timer = Some(tokio::spawn(async move {
             tokio::time::sleep(Duration::from_secs(silence_limit as u64)).await;
 
-            // Check if we should still kill the process
             if *kill_flag.lock().unwrap() {
               if verbose {
                 println!("Silence limit reached. Stopping recording...");
