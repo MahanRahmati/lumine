@@ -150,10 +150,7 @@ impl Whisper {
 
     let samples: Vec<i16> = reader
       .into_samples::<i16>()
-      .map(|x| match x {
-        Ok(sample) => sample,
-        Err(_) => 0,
-      })
+      .map(|x| x.unwrap_or_default())
       .collect();
 
     let mut audio = vec![0.0f32; samples.len()];
@@ -173,53 +170,7 @@ impl Whisper {
       return Err(WhisperError::UnsupportedAudioFormat);
     };
 
-    let audio = if !self.vad_model_path.is_empty() {
-      if self.verbose {
-        println!("Running VAD preprocessing to filter speech segments...");
-      }
-
-      let mut vad_ctx_params = WhisperVadContextParams::default();
-      vad_ctx_params.set_n_threads(1);
-      vad_ctx_params.set_use_gpu(false);
-
-      let mut vad_ctx =
-        WhisperVadContext::new(&self.vad_model_path, vad_ctx_params)
-          .map_err(|_| WhisperError::VadModelNotFound)?;
-
-      let vad_params = WhisperVadParams::new();
-      let segments = vad_ctx
-        .segments_from_samples(vad_params, &audio)
-        .map_err(|_| WhisperError::TranscriptionFailed)?;
-
-      if self.verbose {
-        println!("VAD detected speech segments");
-      }
-
-      let mut speech_audio = Vec::new();
-      for segment in segments {
-        let start_ts = segment.start / 100.0;
-        let end_ts = segment.end / 100.0;
-
-        let start_sample_idx = (start_ts * spec.sample_rate as f32) as usize;
-        let end_sample_idx = (end_ts * spec.sample_rate as f32) as usize;
-
-        if start_sample_idx < audio.len() && end_sample_idx <= audio.len() {
-          speech_audio
-            .extend_from_slice(&audio[start_sample_idx..end_sample_idx]);
-        }
-      }
-
-      if self.verbose {
-        println!(
-          "VAD extracted {} samples of speech audio",
-          speech_audio.len()
-        );
-      }
-
-      speech_audio
-    } else {
-      audio
-    };
+    let audio = self.apply_vad_preprocessing(audio, spec.sample_rate)?;
 
     if self.verbose {
       println!("Running transcription...");
@@ -242,12 +193,62 @@ impl Whisper {
       transcript.push(' ');
     }
 
-    if self.verbose {
-      println!("Transcription completed successfully.");
-    }
-
     return Ok(WhisperResponse {
       text: transcript.trim().to_string(),
     });
+  }
+
+  fn apply_vad_preprocessing(
+    &self,
+    audio: Vec<f32>,
+    sample_rate: u32,
+  ) -> WhisperResult<Vec<f32>> {
+    if self.vad_model_path.is_empty() {
+      return Ok(audio);
+    }
+
+    if self.verbose {
+      println!("Running VAD preprocessing to filter speech segments...");
+    }
+
+    let mut vad_ctx_params = WhisperVadContextParams::default();
+    vad_ctx_params.set_n_threads(1);
+    vad_ctx_params.set_use_gpu(false);
+
+    let mut vad_ctx =
+      WhisperVadContext::new(&self.vad_model_path, vad_ctx_params)
+        .map_err(|_| WhisperError::VadModelNotFound)?;
+
+    let vad_params = WhisperVadParams::new();
+    let segments = vad_ctx
+      .segments_from_samples(vad_params, &audio)
+      .map_err(|_| WhisperError::TranscriptionFailed)?;
+
+    if self.verbose {
+      println!("VAD detected speech segments");
+    }
+
+    let mut speech_audio = Vec::new();
+    for segment in segments {
+      let start_ts = segment.start / 100.0;
+      let end_ts = segment.end / 100.0;
+
+      let start_sample_idx = (start_ts * sample_rate as f32) as usize;
+      let end_sample_idx = (end_ts * sample_rate as f32) as usize;
+
+      if start_sample_idx < audio.len() && end_sample_idx <= audio.len() {
+        speech_audio
+          .extend_from_slice(&audio[start_sample_idx..end_sample_idx]);
+      }
+    }
+
+    if self.verbose {
+      println!(
+        "VAD extracted {} samples of speech audio",
+        speech_audio.len()
+      );
+    }
+
+    return Ok(speech_audio);
   }
 }
