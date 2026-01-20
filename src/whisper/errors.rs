@@ -47,6 +47,11 @@ pub enum WhisperError {
     "Transcription failed. Please check the audio file and model compatibility."
   )]
   TranscriptionFailed,
+
+  #[error(
+    "VAD model not found. Please ensure the VAD model file is valid and accessible."
+  )]
+  VadModelNotFound,
 }
 
 pub type WhisperResult<T> = Result<T, WhisperError>;

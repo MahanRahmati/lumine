@@ -16,6 +16,7 @@ async fn test_send_audio() {
   let whisper = Whisper::new(
     config.get_whisper_url(),
     config.get_whisper_model_path(),
+    config.get_vad_model_path(),
     sample_file_path.to_string(),
     config.get_verbose(),
   );
@@ -40,6 +41,7 @@ async fn test_send_audio_file_not_found() {
   let whisper = Whisper::new(
     config.get_whisper_url(),
     config.get_whisper_model_path(),
+    config.get_vad_model_path(),
     "nonexistent_file.wav".to_string(),
     config.get_verbose(),
   );
@@ -65,6 +67,7 @@ async fn test_send_audio_with_sample_file_invalid_url() {
   let whisper = Whisper::new(
     "invalid-url".to_string(),
     config.get_whisper_model_path(),
+    config.get_vad_model_path(),
     sample_file_path.to_string(),
     config.get_verbose(),
   );

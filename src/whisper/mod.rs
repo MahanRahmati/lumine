@@ -7,6 +7,7 @@ use hound::WavReader;
 use reqwest::multipart;
 use whisper_rs::{
   FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters,
+  WhisperVadContext, WhisperVadContextParams, WhisperVadParams,
   install_logging_hooks,
 };
 
@@ -23,6 +24,7 @@ pub struct WhisperResponse {
 pub struct Whisper {
   url: String,
   model_path: String,
+  vad_model_path: String,
   file_path: String,
   verbose: bool,
 }
@@ -31,12 +33,14 @@ impl Whisper {
   pub fn new(
     url: String,
     model_path: String,
+    vad_model_path: String,
     file_path: String,
     verbose: bool,
   ) -> Self {
     return Whisper {
       url,
       model_path,
+      vad_model_path,
       file_path,
       verbose,
     };
@@ -46,19 +50,17 @@ impl Whisper {
     if self.verbose {
       println!("Sending audio file to Whisper transcription service...");
     }
-    if self.model_path.is_empty() {
-      let response = self.transcribe_remote().await?;
-      if self.verbose {
-        println!("Transcription completed successfully.");
-      }
-      return Ok(response.text);
+
+    let response = if self.model_path.is_empty() {
+      self.transcribe_remote().await?
     } else {
-      let response = self.transcribe_local().await?;
-      if self.verbose {
-        println!("Transcription completed successfully.");
-      }
-      return Ok(response.text);
+      self.transcribe_local().await?
+    };
+
+    if self.verbose {
+      println!("Transcription completed successfully.");
     }
+    return Ok(response.text);
   }
 
   async fn transcribe_remote(&self) -> WhisperResult<WhisperResponse> {
@@ -169,6 +171,54 @@ impl Whisper {
       }
     } else {
       return Err(WhisperError::UnsupportedAudioFormat);
+    };
+
+    let audio = if !self.vad_model_path.is_empty() {
+      if self.verbose {
+        println!("Running VAD preprocessing to filter speech segments...");
+      }
+
+      let mut vad_ctx_params = WhisperVadContextParams::default();
+      vad_ctx_params.set_n_threads(1);
+      vad_ctx_params.set_use_gpu(false);
+
+      let mut vad_ctx =
+        WhisperVadContext::new(&self.vad_model_path, vad_ctx_params)
+          .map_err(|_| WhisperError::VadModelNotFound)?;
+
+      let vad_params = WhisperVadParams::new();
+      let segments = vad_ctx
+        .segments_from_samples(vad_params, &audio)
+        .map_err(|_| WhisperError::TranscriptionFailed)?;
+
+      if self.verbose {
+        println!("VAD detected speech segments");
+      }
+
+      let mut speech_audio = Vec::new();
+      for segment in segments {
+        let start_ts = segment.start / 100.0;
+        let end_ts = segment.end / 100.0;
+
+        let start_sample_idx = (start_ts * spec.sample_rate as f32) as usize;
+        let end_sample_idx = (end_ts * spec.sample_rate as f32) as usize;
+
+        if start_sample_idx < audio.len() && end_sample_idx <= audio.len() {
+          speech_audio
+            .extend_from_slice(&audio[start_sample_idx..end_sample_idx]);
+        }
+      }
+
+      if self.verbose {
+        println!(
+          "VAD extracted {} samples of speech audio",
+          speech_audio.len()
+        );
+      }
+
+      speech_audio
+    } else {
+      audio
     };
 
     if self.verbose {
