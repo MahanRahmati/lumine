@@ -43,6 +43,7 @@ async fn transcribe_file(config: &Config, file_path: &str) {
 
   let whisper = Whisper::new(
     config.get_whisper_url(),
+    config.get_whisper_model_path(),
     file_path.to_string(),
     config.get_verbose(),
   );
@@ -77,6 +78,7 @@ async fn record_and_transcribe(config: &Config) {
 
   let whisper = Whisper::new(
     config.get_whisper_url(),
+    config.get_whisper_model_path(),
     file_path.clone(),
     config.get_verbose(),
   );

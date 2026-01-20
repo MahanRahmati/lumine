@@ -20,6 +20,7 @@ pub struct Config {
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct WhisperConfig {
   pub url: Option<String>,
+  pub model_path: Option<String>,
 }
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
@@ -57,6 +58,10 @@ impl Config {
       .url
       .clone()
       .unwrap_or(String::from("http://127.0.0.1:9090"));
+  }
+
+  pub fn get_whisper_model_path(&self) -> String {
+    return self.whisper.model_path.clone().unwrap_or(String::new());
   }
 
   pub fn get_verbose(&self) -> bool {
@@ -114,6 +119,7 @@ impl Default for Config {
     return Config {
       whisper: WhisperConfig {
         url: Some(String::from("http://127.0.0.1:9090")),
+        model_path: Some(String::new()),
       },
       ffmpeg: FFMPEGConfig {
         recordings_directory: Some(String::new()),
