@@ -15,7 +15,7 @@ on:
 jobs:
   test:
     name: Test
-    runs-on: macos-latest
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v6
 
@@ -44,7 +44,7 @@ jobs:
 
   build:
     name: Build
-    runs-on: macos-latest
+    runs-on: macos-26
     needs: test
     steps:
       - uses: actions/checkout@v6
@@ -62,9 +62,6 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build
-        env:
-          CFLAGS: '-march=armv8-a'
-          CXXFLAGS: '-march=armv8-a'
         run: cargo build --verbose
 
       - name: Build release
