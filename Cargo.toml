@@ -26,10 +26,10 @@ hound = "3.5.1"
 whisper-rs = { version = "0.15.1", features = ["coreml", "metal"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-whisper-rs = { version = "0.15.1", features = ["vulkan"] }
+whisper-rs = { version = "0.15.1" }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-whisper-rs = { version = "0.15.1", features = ["vulkan"] }
+whisper-rs = { version = "0.15.1" }
 
 [lints.clippy]
 needless_return = "allow"
