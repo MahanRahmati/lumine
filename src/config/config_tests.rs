@@ -4,7 +4,7 @@ const VALID_CONFIG: &str = r#"
 [whisper]
 url = "http://localhost:8080"
 
-[ffmpeg]
+[recorder]
 recordings_directory = "test_recordings"
 silence_limit = 5
 silence_detect_noise = 30
@@ -19,7 +19,7 @@ const INVALID_CONFIG: &str = r#"
 [whisper]
 url = "http://localhost:8080"
 
-[ffmpeg]
+[recorder]
 recordings_directory = "test_recordings"
 # Missing required fields and invalid TOML syntax
 silence_limit =
