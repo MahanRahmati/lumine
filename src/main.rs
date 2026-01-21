@@ -72,7 +72,7 @@ async fn transcribe_file(config: &Config, file_path: &str) {
   let transcript = match whisper.transcribe().await {
     Ok(transcript) => transcript,
     Err(e) => {
-      println!("Transcription Error: {}", e);
+      eprintln!("Transcription Error: {}", e);
       std::process::exit(1);
     }
   };
@@ -166,7 +166,7 @@ async fn record_and_transcribe(config: &Config) {
   let transcript = match whisper.transcribe().await {
     Ok(transcript) => transcript,
     Err(e) => {
-      println!("Transcription Error: {}", e);
+      eprintln!("Transcription Error: {}", e);
       std::process::exit(1);
     }
   };
