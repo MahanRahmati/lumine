@@ -17,4 +17,7 @@ pub enum Commands {
     #[arg(short, long)]
     file: String,
   },
+
+  /// Record audio and save it to a file
+  Record,
 }

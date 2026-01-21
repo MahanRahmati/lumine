@@ -29,6 +29,9 @@ async fn main() {
     Some(Commands::Transcribe { file }) => {
       transcribe_file(&config, &file).await;
     }
+    Some(Commands::Record) => {
+      record_only(&config).await;
+    }
     None => {
       record_and_transcribe(&config).await;
     }
@@ -82,6 +85,48 @@ async fn transcribe_file(config: &Config, file_path: &str) {
   }
 
   println!("{}", transcript);
+}
+
+async fn record_only(config: &Config) {
+  let ffmpeg = FFMPEG::new(
+    config.get_recordings_directory(),
+    config.get_silence_limit(),
+    config.get_silence_detect_noise(),
+    config.get_preferred_audio_input_device(),
+    config.get_verbose(),
+  );
+
+  let file_path = match ffmpeg.record_audio().await {
+    Ok(file_path) => file_path,
+    Err(e) => {
+      eprintln!("Recording Error: {}", e);
+      std::process::exit(1);
+    }
+  };
+
+  let converted_file_path =
+    match ffmpeg.convert_audio_for_whisper(&file_path).await {
+      Ok(converted_path) => converted_path,
+      Err(e) => {
+        eprintln!("Audio Conversion Error: {}", e);
+        std::process::exit(1);
+      }
+    };
+
+  let result = remove_file(&file_path).await;
+  if result.is_ok() && config.get_verbose() {
+    println!("File removed: {}", file_path);
+  }
+
+  println!(
+    "Audio recorded and converted successfully: {}",
+    converted_file_path
+  );
+
+  if config.get_verbose() {
+    println!("File saved in: {}", config.get_recordings_directory());
+    println!("Format: 16kHz mono WAV (Whisper-ready)");
+  }
 }
 
 async fn record_and_transcribe(config: &Config) {

@@ -295,16 +295,18 @@ impl FFMPEG {
       .map_err(|_| FFMPEGError::AudioConversionFailed)?;
 
     let input_path = Path::new(input_file);
+    let parent_dir = input_path.parent().unwrap_or_else(|| Path::new("."));
     let stem = input_path
       .file_stem()
       .and_then(|s| s.to_str())
       .unwrap_or("audio");
-    let output_file = format!("{}_whisper.wav", stem);
+    let output_file = parent_dir.join(format!("{}_whisper.wav", stem));
+    let output_file_str = output_file.to_string_lossy();
 
     if self.verbose {
       println!(
         "Converting audio to Whisper format: {} → {}",
-        input_file, output_file
+        input_file, output_file_str
       );
     }
 
@@ -318,7 +320,7 @@ impl FFMPEG {
         "1",
         "-c:a",
         "pcm_s16le",
-        &output_file,
+        &output_file_str,
         "-y",
       ])
       .output()
@@ -334,9 +336,9 @@ impl FFMPEG {
     }
 
     if self.verbose {
-      println!("Audio conversion completed: {}", output_file);
+      println!("Audio conversion completed: {}", output_file_str);
     }
 
-    return Ok(output_file);
+    return Ok(output_file_str.to_string());
   }
 }
