@@ -15,7 +15,7 @@ lumine
 You can also transcribe an existing audio file directly:
 
 ```bash
-lumine transcribe --file samples/jfk.wav
+lumine transcribe --file path/to/audio.wav
 ```
 
 ### Record an Audio File
