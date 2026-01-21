@@ -15,9 +15,7 @@ on:
 jobs:
   test:
     name: Test
-    runs-on: macos-26
-    env:
-      GGML_CMAKE_FLAGS: '-DGGML_NATIVE=OFF -DCMAKE_C_FLAGS=-march=armv8.5-a -DCMAKE_CXX_FLAGS=-march=armv8.5-a'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
@@ -46,10 +44,8 @@ jobs:
 
   build:
     name: Build
-    runs-on: macos-26
+    runs-on: ubuntu-latest
     needs: test
-    env:
-      GGML_CMAKE_FLAGS: '-DGGML_NATIVE=OFF -DCMAKE_C_FLAGS=-march=armv8.5-a -DCMAKE_CXX_FLAGS=-march=armv8.5-a'
     steps:
       - uses: actions/checkout@v6
 
