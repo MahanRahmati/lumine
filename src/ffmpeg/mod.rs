@@ -24,7 +24,7 @@ pub struct FFMPEG {
   recordings_directory: String,
   silence_limit: i32,
   silence_detect_noise: i32,
-  prefered_audio_input_device: String,
+  preferred_audio_input_device: String,
   verbose: bool,
 }
 
@@ -33,14 +33,14 @@ impl FFMPEG {
     recordings_directory: String,
     silence_limit: i32,
     silence_detect_noise: i32,
-    prefered_audio_input_device: String,
+    preferred_audio_input_device: String,
     verbose: bool,
   ) -> Self {
     return FFMPEG {
       recordings_directory,
       silence_limit,
       silence_detect_noise,
-      prefered_audio_input_device,
+      preferred_audio_input_device,
       verbose,
     };
   }
@@ -119,7 +119,7 @@ impl FFMPEG {
   ) -> AudioInputDevice {
     let default_device = AudioInputDevice::default();
 
-    if self.prefered_audio_input_device.is_empty() {
+    if self.preferred_audio_input_device.is_empty() {
       if self.verbose {
         println!(
           "No preferred audio input device specified, using default device"
@@ -131,7 +131,7 @@ impl FFMPEG {
     for device in devices {
       if device
         .get_name()
-        .contains(&self.prefered_audio_input_device)
+        .contains(&self.preferred_audio_input_device)
       {
         if self.verbose {
           println!(
