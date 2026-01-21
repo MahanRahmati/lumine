@@ -10,6 +10,15 @@ use xdg::BaseDirectories;
 use crate::config::errors::{ConfigError, ConfigResult};
 use crate::files::operations;
 
+const DEFAULT_DIRECTORY: &str = "lumine";
+const DEFAULT_CONFIG_NAME: &str = "config.toml";
+const DEFAULT_WHISPER_URL: &str = "http://127.0.0.1:9090";
+const DEFAULT_SILENCE_LIMIT_SECONDS: i32 = 2;
+const DEFAULT_SILENCE_DETECT_NOISE_DB: i32 = 40;
+const DEFAULT_RECORDINGS_DIRECTORY: &str = "recordings";
+const DEFAULT_REMOVE_AFTER_TRANSSRIPT: bool = true;
+const DEFAULT_VERBOSE: bool = false;
+
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct Config {
   pub whisper: WhisperConfig,
@@ -40,8 +49,8 @@ pub struct GeneralConfig {
 
 impl Config {
   pub async fn load() -> ConfigResult<Config> {
-    let xdg_dirs = BaseDirectories::with_prefix("lumine");
-    let config_path = match xdg_dirs.find_config_file("config.toml") {
+    let xdg_dirs = BaseDirectories::with_prefix(DEFAULT_DIRECTORY);
+    let config_path = match xdg_dirs.find_config_file(DEFAULT_CONFIG_NAME) {
       Some(path) => path,
       None => {
         let default_config = Config::default();
@@ -58,7 +67,7 @@ impl Config {
       .whisper
       .url
       .clone()
-      .unwrap_or(String::from("http://127.0.0.1:9090"));
+      .unwrap_or(String::from(DEFAULT_WHISPER_URL));
   }
 
   pub fn get_whisper_model_path(&self) -> String {
@@ -69,10 +78,6 @@ impl Config {
     return self.whisper.vad_model_path.clone().unwrap_or_default();
   }
 
-  pub fn get_verbose(&self) -> bool {
-    return self.general.verbose.unwrap_or(false);
-  }
-
   pub fn get_recordings_directory(&self) -> String {
     if let Some(dir) = &self.ffmpeg.recordings_directory
       && !dir.is_empty()
@@ -80,23 +85,25 @@ impl Config {
       return dir.clone();
     }
 
-    let xdg_dirs = BaseDirectories::with_prefix("lumine");
+    let xdg_dirs = BaseDirectories::with_prefix(DEFAULT_DIRECTORY);
     return xdg_dirs
-      .create_data_directory("recordings")
+      .create_data_directory(DEFAULT_RECORDINGS_DIRECTORY)
       .map(|path| path.to_string_lossy().to_string())
-      .unwrap_or_else(|_| String::from("recordings"));
-  }
-
-  pub fn get_remove_after_transcript(&self) -> bool {
-    return self.general.remove_after_transcript.unwrap_or(true);
+      .unwrap_or_else(|_| String::from(DEFAULT_RECORDINGS_DIRECTORY));
   }
 
   pub fn get_silence_limit(&self) -> i32 {
-    return self.ffmpeg.silence_limit.unwrap_or(2);
+    return self
+      .ffmpeg
+      .silence_limit
+      .unwrap_or(DEFAULT_SILENCE_LIMIT_SECONDS);
   }
 
   pub fn get_silence_detect_noise(&self) -> i32 {
-    return self.ffmpeg.silence_detect_noise.unwrap_or(40);
+    return self
+      .ffmpeg
+      .silence_detect_noise
+      .unwrap_or(DEFAULT_SILENCE_DETECT_NOISE_DB);
   }
 
   pub fn get_preferred_audio_input_device(&self) -> String {
@@ -105,6 +112,17 @@ impl Config {
       .preferred_audio_input_device
       .clone()
       .unwrap_or_default();
+  }
+
+  pub fn get_remove_after_transcript(&self) -> bool {
+    return self
+      .general
+      .remove_after_transcript
+      .unwrap_or(DEFAULT_REMOVE_AFTER_TRANSSRIPT);
+  }
+
+  pub fn get_verbose(&self) -> bool {
+    return self.general.verbose.unwrap_or(false);
   }
 }
 
@@ -123,19 +141,19 @@ impl Default for Config {
   fn default() -> Self {
     return Config {
       whisper: WhisperConfig {
-        url: Some(String::from("http://127.0.0.1:9090")),
+        url: Some(String::from(DEFAULT_WHISPER_URL)),
         model_path: Some(String::new()),
         vad_model_path: Some(String::new()),
       },
       ffmpeg: FFMPEGConfig {
         recordings_directory: Some(String::new()),
-        silence_limit: Some(2),
-        silence_detect_noise: Some(40),
+        silence_limit: Some(DEFAULT_SILENCE_LIMIT_SECONDS),
+        silence_detect_noise: Some(DEFAULT_SILENCE_DETECT_NOISE_DB),
         preferred_audio_input_device: Some(String::new()),
       },
       general: GeneralConfig {
-        remove_after_transcript: Some(true),
-        verbose: Some(false),
+        remove_after_transcript: Some(DEFAULT_REMOVE_AFTER_TRANSSRIPT),
+        verbose: Some(DEFAULT_VERBOSE),
       },
     };
   }
