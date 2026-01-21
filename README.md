@@ -34,7 +34,7 @@ url = "http://127.0.0.1:9090"
 model_path = ""
 vad_model_path = ""
 
-[ffmpeg]
+[recorder]
 recordings_directory = ""
 silence_limit = 2
 silence_detect_noise = 40

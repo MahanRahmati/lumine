@@ -22,7 +22,7 @@ const DEFAULT_VERBOSE: bool = false;
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct Config {
   pub whisper: WhisperConfig,
-  pub ffmpeg: FFMPEGConfig,
+  pub recorder: RecorderConfig,
   pub general: GeneralConfig,
 }
 
@@ -34,7 +34,7 @@ pub struct WhisperConfig {
 }
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
-pub struct FFMPEGConfig {
+pub struct RecorderConfig {
   pub recordings_directory: Option<String>,
   pub silence_limit: Option<i32>,
   pub silence_detect_noise: Option<i32>,
@@ -79,7 +79,7 @@ impl Config {
   }
 
   pub fn get_recordings_directory(&self) -> String {
-    if let Some(dir) = &self.ffmpeg.recordings_directory
+    if let Some(dir) = &self.recorder.recordings_directory
       && !dir.is_empty()
     {
       return dir.clone();
@@ -94,21 +94,21 @@ impl Config {
 
   pub fn get_silence_limit(&self) -> i32 {
     return self
-      .ffmpeg
+      .recorder
       .silence_limit
       .unwrap_or(DEFAULT_SILENCE_LIMIT_SECONDS);
   }
 
   pub fn get_silence_detect_noise(&self) -> i32 {
     return self
-      .ffmpeg
+      .recorder
       .silence_detect_noise
       .unwrap_or(DEFAULT_SILENCE_DETECT_NOISE_DB);
   }
 
   pub fn get_preferred_audio_input_device(&self) -> String {
     return self
-      .ffmpeg
+      .recorder
       .preferred_audio_input_device
       .clone()
       .unwrap_or_default();
@@ -145,7 +145,7 @@ impl Default for Config {
         model_path: Some(String::new()),
         vad_model_path: Some(String::new()),
       },
-      ffmpeg: FFMPEGConfig {
+      recorder: RecorderConfig {
         recordings_directory: Some(String::new()),
         silence_limit: Some(DEFAULT_SILENCE_LIMIT_SECONDS),
         silence_detect_noise: Some(DEFAULT_SILENCE_DETECT_NOISE_DB),
