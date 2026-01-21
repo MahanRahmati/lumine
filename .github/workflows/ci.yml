@@ -62,6 +62,9 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build
+        env:
+          CFLAGS: '-march=armv8-a'
+          CXXFLAGS: '-march=armv8-a'
         run: cargo build --verbose
 
       - name: Build release
