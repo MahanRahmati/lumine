@@ -18,6 +18,14 @@ You can also transcribe an existing audio file directly:
 lumine transcribe --file samples/jfk.wav
 ```
 
+### Record an Audio File
+
+You can also record an audio file directly:
+
+```bash
+lumine record
+```
+
 ## Configuration
 
 Lumine is configured using a toml configuration file.
