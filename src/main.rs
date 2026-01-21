@@ -41,11 +41,28 @@ async fn transcribe_file(config: &Config, file_path: &str) {
     std::process::exit(1);
   }
 
+  let ffmpeg = FFMPEG::new(
+    config.get_recordings_directory(),
+    config.get_silence_limit(),
+    config.get_silence_detect_noise(),
+    config.get_preferred_audio_input_device(),
+    config.get_verbose(),
+  );
+
+  let converted_file_path =
+    match ffmpeg.convert_audio_for_whisper(file_path).await {
+      Ok(converted_path) => converted_path,
+      Err(e) => {
+        eprintln!("Audio Conversion Error: {}", e);
+        std::process::exit(1);
+      }
+    };
+
   let whisper = Whisper::new(
     config.get_whisper_url(),
     config.get_whisper_model_path(),
     config.get_vad_model_path(),
-    file_path.to_string(),
+    converted_file_path.clone(),
     config.get_verbose(),
   );
 
@@ -56,6 +73,13 @@ async fn transcribe_file(config: &Config, file_path: &str) {
       std::process::exit(1);
     }
   };
+
+  if config.get_remove_after_transcript() {
+    let result = remove_file(&converted_file_path).await;
+    if result.is_ok() && config.get_verbose() {
+      println!("File removed: {}", converted_file_path);
+    }
+  }
 
   println!("{}", transcript);
 }
@@ -77,11 +101,20 @@ async fn record_and_transcribe(config: &Config) {
     }
   };
 
+  let converted_file_path =
+    match ffmpeg.convert_audio_for_whisper(&file_path).await {
+      Ok(converted_path) => converted_path,
+      Err(e) => {
+        eprintln!("Audio Conversion Error: {}", e);
+        std::process::exit(1);
+      }
+    };
+
   let whisper = Whisper::new(
     config.get_whisper_url(),
     config.get_whisper_model_path(),
     config.get_vad_model_path(),
-    file_path.clone(),
+    converted_file_path.clone(),
     config.get_verbose(),
   );
 
@@ -94,9 +127,16 @@ async fn record_and_transcribe(config: &Config) {
   };
 
   if config.get_remove_after_transcript() {
-    let result = remove_file(&file_path.clone()).await;
+    let result = remove_file(&file_path).await;
     if result.is_ok() && config.get_verbose() {
       println!("File removed: {}", file_path);
+    }
+  }
+
+  if config.get_remove_after_transcript() {
+    let result = remove_file(&converted_file_path).await;
+    if result.is_ok() && config.get_verbose() {
+      println!("File removed: {}", converted_file_path);
     }
   }
 

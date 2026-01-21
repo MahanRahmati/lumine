@@ -21,6 +21,11 @@ pub enum FFMPEGError {
     "Cannot create recordings directory. Please check file permissions and available disk space."
   )]
   CouldNotCreateDirectory,
+
+  #[error(
+    "Failed to convert audio to Whisper format. Please check FFmpeg installation and file permissions."
+  )]
+  AudioConversionFailed,
 }
 
 pub type FFMPEGResult<T> = Result<T, FFMPEGError>;
