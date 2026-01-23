@@ -6,7 +6,6 @@ mod ffmpeg_tests;
 
 use std::io::BufRead;
 use std::os::unix::process::ExitStatusExt;
-use std::path::Path;
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -284,61 +283,5 @@ impl FFMPEG {
     }
 
     return Ok(output_file);
-  }
-
-  pub async fn convert_audio_for_whisper(
-    &self,
-    input_file: &str,
-  ) -> FFMPEGResult<String> {
-    operations::validate_file_exists(input_file)
-      .await
-      .map_err(|_| FFMPEGError::AudioConversionFailed)?;
-
-    let input_path = Path::new(input_file);
-    let parent_dir = input_path.parent().unwrap_or_else(|| Path::new("."));
-    let stem = input_path
-      .file_stem()
-      .and_then(|s| s.to_str())
-      .unwrap_or("audio");
-    let output_file = parent_dir.join(format!("{}_whisper.wav", stem));
-    let output_file_str = output_file.to_string_lossy();
-
-    if self.verbose {
-      println!(
-        "Converting audio to Whisper format: {} → {}",
-        input_file, output_file_str
-      );
-    }
-
-    let output = tokio::process::Command::new("ffmpeg")
-      .args([
-        "-i",
-        input_file,
-        "-ar",
-        "16000",
-        "-ac",
-        "1",
-        "-c:a",
-        "pcm_s16le",
-        &output_file_str,
-        "-y",
-      ])
-      .output()
-      .await
-      .map_err(|_| FFMPEGError::AudioConversionFailed)?;
-
-    if !output.status.success() {
-      if self.verbose {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        println!("FFmpeg conversion error: {}", stderr);
-      }
-      return Err(FFMPEGError::AudioConversionFailed);
-    }
-
-    if self.verbose {
-      println!("Audio conversion completed: {}", output_file_str);
-    }
-
-    return Ok(output_file_str.to_string());
   }
 }

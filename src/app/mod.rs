@@ -1,6 +1,7 @@
 mod errors;
 
 use crate::app::errors::{RuntimeError, RuntimeResult};
+use crate::audio::Audio;
 use crate::config::Config;
 use crate::ffmpeg::FFMPEG;
 use crate::files::operations::{remove_file, validate_file_exists};
@@ -23,6 +24,10 @@ impl App {
       self.config.get_preferred_audio_input_device(),
       self.config.get_verbose(),
     );
+  }
+
+  fn create_audio(&self) -> Audio {
+    return Audio::new(self.config.get_verbose());
   }
 
   fn create_whisper_instance(&self, file_path: String) -> Whisper {
@@ -52,9 +57,9 @@ impl App {
       .await
       .map_err(|e| RuntimeError::File(e.to_string()))?;
 
-    let ffmpeg = self.create_ffmpeg_instance();
-    let converted_file_path = ffmpeg
-      .convert_audio_for_whisper(file_path)
+    let audio = self.create_audio();
+    let converted_file_path = audio
+      .convert_audio(file_path)
       .await
       .map_err(|e| RuntimeError::AudioConversion(e.to_string()))?;
 
@@ -76,8 +81,9 @@ impl App {
       .await
       .map_err(|e| RuntimeError::Recording(e.to_string()))?;
 
-    let converted_file_path = ffmpeg
-      .convert_audio_for_whisper(&file_path)
+    let audio = self.create_audio();
+    let converted_file_path = audio
+      .convert_audio(&file_path)
       .await
       .map_err(|e| RuntimeError::AudioConversion(e.to_string()))?;
 
@@ -101,8 +107,9 @@ impl App {
       .await
       .map_err(|e| RuntimeError::Recording(e.to_string()))?;
 
-    let converted_file_path = ffmpeg
-      .convert_audio_for_whisper(&file_path)
+    let audio = self.create_audio();
+    let converted_file_path = audio
+      .convert_audio(&file_path)
       .await
       .map_err(|e| RuntimeError::AudioConversion(e.to_string()))?;
 

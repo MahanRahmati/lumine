@@ -126,31 +126,3 @@ fn test_record_audio_with_device() {
 fn test_record_audio_with_device_with_invalid_directory() {
   // TODO: Add the test.
 }
-
-#[tokio::test]
-async fn test_convert_audio_for_whisper() {
-  let config = Config::default();
-  let ffmpeg = FFMPEG::new(
-    config.get_recordings_directory(),
-    config.get_silence_limit(),
-    config.get_silence_detect_noise(),
-    config.get_preferred_audio_input_device(),
-    config.get_verbose(),
-  );
-
-  let temp_dir = std::env::temp_dir();
-  let input_file = temp_dir.join("test_convert_input.wav");
-
-  std::fs::write(&input_file, b"fake wav content").unwrap();
-
-  let result = ffmpeg
-    .convert_audio_for_whisper(&input_file.to_string_lossy())
-    .await;
-  assert!(result.is_err());
-  match result.unwrap_err() {
-    FFMPEGError::AudioConversionFailed => (),
-    _ => panic!("Expected AudioConversionFailed error"),
-  }
-
-  let _ = std::fs::remove_file(&input_file);
-}
