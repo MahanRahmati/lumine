@@ -30,30 +30,7 @@ impl AudioConverter {
       );
     }
 
-    let output = tokio::process::Command::new("ffmpeg")
-      .args([
-        "-i",
-        input_file,
-        "-ar",
-        "16000",
-        "-ac",
-        "1",
-        "-c:a",
-        "pcm_s16le",
-        &output_file_str,
-        "-y",
-      ])
-      .output()
-      .await
-      .map_err(|_| AudioError::ConversionFailed)?;
-
-    if !output.status.success() {
-      if verbose {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        println!("FFmpeg conversion error: {}", stderr);
-      }
-      return Err(AudioError::ConversionFailed);
-    }
+    convert_with_ffmpeg(input_file, &output_file_str, verbose).await?;
 
     if verbose {
       println!("Audio conversion completed: {}", output_file_str);
@@ -61,4 +38,37 @@ impl AudioConverter {
 
     return Ok(output_file_str.to_string());
   }
+}
+
+async fn convert_with_ffmpeg(
+  input_file: &str,
+  output_file: &str,
+  verbose: bool,
+) -> AudioResult<()> {
+  let output = tokio::process::Command::new("ffmpeg")
+    .args([
+      "-i",
+      input_file,
+      "-ar",
+      "16000",
+      "-ac",
+      "1",
+      "-c:a",
+      "pcm_s16le",
+      output_file,
+      "-y",
+    ])
+    .output()
+    .await
+    .map_err(|_| AudioError::ConversionFailed)?;
+
+  if !output.status.success() {
+    if verbose {
+      let stderr = String::from_utf8_lossy(&output.stderr);
+      println!("FFmpeg conversion error: {}", stderr);
+    }
+    return Err(AudioError::ConversionFailed);
+  }
+
+  return Ok(());
 }
