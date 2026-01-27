@@ -1,12 +1,13 @@
-use std::io::BufRead;
 use std::os::unix::process::ExitStatusExt;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 use std::sync::Arc;
 use std::time::Duration;
 
 use regex::Regex;
-use std::sync::Mutex;
-use tokio::task::{self, JoinHandle};
+use tokio::io::{AsyncBufReadExt, BufReader};
+use tokio::process::Command;
+use tokio::sync::Mutex;
+use tokio::task::JoinHandle;
 
 use crate::audio::devices::{AudioInputDevice, AudioInputDevices};
 use crate::audio::errors::{AudioError, AudioResult};
@@ -157,7 +158,7 @@ impl AudioRecorder {
       self.recordings_directory, timestamp
     );
 
-    let output = Command::new("ffmpeg")
+    let mut child = Command::new("ffmpeg")
       .args([
         "-f",
         "avfoundation",
@@ -189,80 +190,53 @@ impl AudioRecorder {
       );
     }
 
-    let child = Arc::new(Mutex::new(output));
-    let child_clone = Arc::clone(&child);
     let stderr = child
-      .lock()
-      .unwrap()
       .stderr
       .take()
       .ok_or(AudioError::CouldNotReadFFMPEGOutput)?;
 
-    let mut reader = std::io::BufReader::new(stderr);
-
-    let should_kill = Arc::new(Mutex::new(true));
-    let should_kill_clone = Arc::clone(&should_kill);
+    let mut reader = BufReader::new(stderr).lines();
 
     let verbose = self.verbose;
     let silence_limit = self.silence_limit;
+    let child_mutex = Arc::new(Mutex::new(child));
+    let mut timer_handle: Option<JoinHandle<()>> = None;
 
-    let handle = task::spawn_blocking(move || {
-      let mut line = String::new();
-      let mut _timer: Option<JoinHandle<()>> = None;
-
-      while let Ok(n) = reader.read_line(&mut line) {
-        if n == 0 {
-          break;
+    while let Ok(Some(line)) = reader.next_line().await {
+      if line.contains("silence_start") {
+        if verbose {
+          println!(
+            "Possible silence detected... starting {}s countdown.",
+            silence_limit
+          );
         }
 
-        if line.contains("silence_start") {
+        let child_for_timer = Arc::clone(&child_mutex);
+        timer_handle = Some(tokio::spawn(async move {
+          tokio::time::sleep(Duration::from_secs(silence_limit as u64)).await;
           if verbose {
-            println!(
-              "Possible silence detected... starting {}s countdown.",
-              silence_limit
-            );
+            println!("Silence limit reached. Stopping recording...");
           }
-
-          *should_kill.lock().unwrap() = true;
-
-          let child_for_timer = Arc::clone(&child_clone);
-          let kill_flag = Arc::clone(&should_kill_clone);
-          _timer = Some(tokio::spawn(async move {
-            tokio::time::sleep(Duration::from_secs(silence_limit as u64)).await;
-
-            if *kill_flag.lock().unwrap() {
-              if verbose {
-                println!("Silence limit reached. Stopping recording...");
-              }
-              let _ = child_for_timer.lock().unwrap().kill();
-            }
-          }));
-        }
-
-        if line.contains("silence_end") {
-          if verbose {
-            println!("Sound detected. Resetting silence timer.");
-          }
-          *should_kill.lock().unwrap() = false;
-          _timer = None;
-        }
-
-        line.clear();
+          let _ = child_for_timer.lock().await.kill().await;
+        }));
       }
 
-      if verbose {
-        println!("Recording ended.");
+      if line.contains("silence_end") {
+        if verbose {
+          println!("Sound detected. Resetting silence timer.");
+        }
+        if let Some(handle) = timer_handle.take() {
+          handle.abort();
+        }
       }
-    });
-
-    if handle.await.is_err() {
-      return Err(AudioError::CouldNotReadFFMPEGOutput);
     }
 
-    let result = child.lock().unwrap().wait();
-    let status = result.map_err(|_| AudioError::CouldNotExecuteFFMPEG)?;
+    if verbose {
+      println!("Recording ended.");
+    }
 
-    if !status.success()
+    if let Ok(status) = child_mutex.lock().await.wait().await
+      && !status.success()
       && status.code() != Some(255)
       && status.signal() != Some(9)
     {
