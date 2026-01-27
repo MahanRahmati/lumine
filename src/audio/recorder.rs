@@ -1,25 +1,19 @@
-mod devices;
-mod errors;
-
-#[cfg(test)]
-mod ffmpeg_tests;
-
 use std::io::BufRead;
 use std::os::unix::process::ExitStatusExt;
 use std::process::{Command, Stdio};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::Duration;
 
 use regex::Regex;
-use tokio::task;
-use tokio::task::JoinHandle;
+use std::sync::Mutex;
+use tokio::task::{self, JoinHandle};
 
-use crate::ffmpeg::devices::{AudioInputDevice, AudioInputDevices};
-use crate::ffmpeg::errors::{FFMPEGError, FFMPEGResult};
+use crate::audio::devices::{AudioInputDevice, AudioInputDevices};
+use crate::audio::errors::{AudioError, AudioResult};
 use crate::files::operations;
 
 #[derive(Debug, Clone)]
-pub struct FFMPEG {
+pub struct AudioRecorder {
   recordings_directory: String,
   silence_limit: i32,
   silence_detect_noise: i32,
@@ -27,7 +21,7 @@ pub struct FFMPEG {
   verbose: bool,
 }
 
-impl FFMPEG {
+impl AudioRecorder {
   pub fn new(
     recordings_directory: String,
     silence_limit: i32,
@@ -35,7 +29,7 @@ impl FFMPEG {
     preferred_audio_input_device: String,
     verbose: bool,
   ) -> Self {
-    return FFMPEG {
+    return Self {
       recordings_directory,
       silence_limit,
       silence_detect_noise,
@@ -44,19 +38,19 @@ impl FFMPEG {
     };
   }
 
-  pub async fn record_audio(&self) -> FFMPEGResult<String> {
+  pub async fn record_audio(&self) -> AudioResult<String> {
     self.check_ffmpeg().await?;
     let devices = self.get_audio_input_devices().await?;
     let device = self.select_audio_input_device(devices);
     return self.record_audio_with_device(device).await;
   }
 
-  async fn check_ffmpeg(&self) -> FFMPEGResult<bool> {
+  async fn check_ffmpeg(&self) -> AudioResult<bool> {
     let output = tokio::process::Command::new("ffmpeg")
       .args(["-version"])
       .output()
       .await
-      .map_err(|_| FFMPEGError::NotFound)?;
+      .map_err(|_| AudioError::FFMPEGNotFound)?;
 
     let output_str = String::from_utf8_lossy(&output.stdout);
     for line in output_str.lines() {
@@ -67,15 +61,15 @@ impl FFMPEG {
         return Ok(true);
       }
     }
-    return Err(FFMPEGError::NotFound);
+    return Err(AudioError::FFMPEGNotFound);
   }
 
-  async fn get_audio_input_devices(&self) -> FFMPEGResult<AudioInputDevices> {
+  async fn get_audio_input_devices(&self) -> AudioResult<AudioInputDevices> {
     let output = tokio::process::Command::new("ffmpeg")
       .args(["-f", "avfoundation", "-list_devices", "true", "-i", ""])
       .output()
       .await
-      .map_err(|_| FFMPEGError::CouldNotExecute)?;
+      .map_err(|_| AudioError::CouldNotExecuteFFMPEG)?;
 
     let output_str = String::from_utf8_lossy(&output.stderr);
     let mut audio_section = false;
@@ -152,10 +146,10 @@ impl FFMPEG {
   async fn record_audio_with_device(
     &self,
     device: AudioInputDevice,
-  ) -> FFMPEGResult<String> {
+  ) -> AudioResult<String> {
     operations::create_directory_all(&self.recordings_directory)
       .await
-      .map_err(|_| FFMPEGError::CouldNotCreateDirectory)?;
+      .map_err(|_| AudioError::CouldNotCreateDirectory)?;
 
     let timestamp = chrono::Local::now().format("%Y-%m-%d_%H-%M-%S");
     let output_file = format!(
@@ -182,7 +176,7 @@ impl FFMPEG {
       ])
       .stderr(Stdio::piped())
       .spawn()
-      .map_err(|_| FFMPEGError::CouldNotExecute)?;
+      .map_err(|_| AudioError::CouldNotExecuteFFMPEG)?;
 
     if self.verbose {
       println!("Recording audio to: {}", output_file);
@@ -202,7 +196,7 @@ impl FFMPEG {
       .unwrap()
       .stderr
       .take()
-      .ok_or(FFMPEGError::CouldNotReadOutput)?;
+      .ok_or(AudioError::CouldNotReadFFMPEGOutput)?;
 
     let mut reader = std::io::BufReader::new(stderr);
 
@@ -262,11 +256,11 @@ impl FFMPEG {
     });
 
     if handle.await.is_err() {
-      return Err(FFMPEGError::CouldNotReadOutput);
+      return Err(AudioError::CouldNotReadFFMPEGOutput);
     }
 
     let result = child.lock().unwrap().wait();
-    let status = result.map_err(|_| FFMPEGError::CouldNotExecute)?;
+    let status = result.map_err(|_| AudioError::CouldNotExecuteFFMPEG)?;
 
     if !status.success()
       && status.code() != Some(255)
@@ -275,7 +269,7 @@ impl FFMPEG {
       if self.verbose {
         println!("Process failed with exit code: {:?}", status.code());
       }
-      return Err(FFMPEGError::CouldNotExecute);
+      return Err(AudioError::CouldNotExecuteFFMPEG);
     }
 
     if self.verbose {

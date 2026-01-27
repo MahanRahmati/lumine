@@ -2,7 +2,6 @@ mod app;
 mod audio;
 mod cli;
 mod config;
-mod ffmpeg;
 mod files;
 mod network;
 mod whisper;

@@ -9,6 +9,26 @@ pub enum AudioError {
     "Failed to convert audio to Whisper format. Please check FFmpeg installation and file permissions."
   )]
   ConversionFailed,
+
+  #[error(
+    "FFmpeg not found. Please install FFmpeg and ensure it's in your PATH."
+  )]
+  FFMPEGNotFound,
+
+  #[error(
+    "Failed to run FFmpeg. Please check if FFmpeg is properly installed and has permission to access audio devices."
+  )]
+  CouldNotExecuteFFMPEG,
+
+  #[error(
+    "Unable to read FFmpeg output. This might be due to permission issues or corrupted FFmpeg installation."
+  )]
+  CouldNotReadFFMPEGOutput,
+
+  #[error(
+    "Cannot create recordings directory. Please check file permissions and available disk space."
+  )]
+  CouldNotCreateDirectory,
 }
 
 pub type AudioResult<T> = Result<T, AudioError>;
