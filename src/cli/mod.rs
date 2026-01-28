@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod cli_tests;
+
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
