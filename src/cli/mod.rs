@@ -23,4 +23,7 @@ pub enum Commands {
 
   /// Record audio and save it to a file
   Record,
+
+  /// Reset configuration to default values
+  ResetConfig,
 }

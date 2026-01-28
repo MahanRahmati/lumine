@@ -93,3 +93,17 @@ fn test_parse_config_content_with_wrong_content() {
     _ => panic!("Expected Parse error"),
   }
 }
+
+#[tokio::test]
+async fn test_config_reset_to_defaults() {
+  let result = Config::reset_to_defaults().await;
+  assert!(result.is_ok(), "Reset to defaults should succeed");
+
+  let config = Config::load().await.unwrap();
+  assert_eq!(config.get_whisper_url(), "http://127.0.0.1:9090");
+  assert_eq!(config.get_silence_limit(), 2);
+  assert_eq!(config.get_silence_detect_noise(), 40);
+  assert_eq!(config.get_preferred_audio_input_device(), "");
+  assert!(config.get_remove_after_transcript());
+  assert!(!config.get_verbose());
+}

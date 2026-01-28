@@ -215,6 +215,19 @@ impl Config {
   pub fn get_verbose(&self) -> bool {
     return self.general.verbose.unwrap_or(false);
   }
+
+  /// Resets the configuration to default values and saves it.
+  ///
+  /// Creates a new default configuration and saves it to the XDG config directory,
+  /// overwriting any existing configuration file.
+  ///
+  /// # Returns
+  ///
+  /// A `ConfigResult<()>` indicating success or failure.
+  pub async fn reset_to_defaults() -> ConfigResult<()> {
+    let default_config = Config::default();
+    return save_config(default_config).await;
+  }
 }
 
 async fn get_config_content(config_path: PathBuf) -> ConfigResult<String> {
@@ -226,6 +239,25 @@ async fn get_config_content(config_path: PathBuf) -> ConfigResult<String> {
 fn parse_config_content(config_content: String) -> ConfigResult<Config> {
   return toml::from_str(&config_content)
     .map_err(|e| ConfigError::Parse(e.to_string()));
+}
+
+async fn save_config(config: Config) -> ConfigResult<()> {
+  let xdg_dirs = BaseDirectories::with_prefix(DEFAULT_DIRECTORY);
+
+  let config_path = match xdg_dirs.place_config_file(DEFAULT_CONFIG_NAME) {
+    Ok(path) => path,
+    Err(e) => return Err(ConfigError::FileRead(e.to_string())),
+  };
+
+  let config_content = match toml::to_string_pretty(&config) {
+    Ok(content) => content,
+    Err(e) => return Err(ConfigError::Parse(e.to_string())),
+  };
+
+  match tokio::fs::write(&config_path, config_content).await {
+    Ok(_) => return Ok(()),
+    Err(e) => return Err(ConfigError::FileRead(e.to_string())),
+  };
 }
 
 impl Default for Config {

@@ -29,6 +29,16 @@ async fn main() {
   let result = match cli.command {
     Some(Commands::Transcribe { file }) => app.transcribe_file(&file).await,
     Some(Commands::Record) => app.record_only().await,
+    Some(Commands::ResetConfig) => match Config::reset_to_defaults().await {
+      Ok(_) => {
+        println!("Configuration has been reset to default values.");
+        return;
+      }
+      Err(e) => {
+        eprintln!("Failed to reset configuration: {}", e);
+        std::process::exit(1);
+      }
+    },
     None => app.record_and_transcribe().await,
   };
 
