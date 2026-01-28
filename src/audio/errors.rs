@@ -1,5 +1,8 @@
 use thiserror::Error;
 
+/// Audio-related errors.
+///
+/// Represents errors that can occur during audio recording and conversion operations.
 #[derive(Error, Debug)]
 pub enum AudioError {
   #[error("Audio file not found. Please check the file path.")]
@@ -31,4 +34,5 @@ pub enum AudioError {
   CouldNotCreateDirectory,
 }
 
+/// Result type for audio operations.
 pub type AudioResult<T> = Result<T, AudioError>;

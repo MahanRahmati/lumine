@@ -1,5 +1,8 @@
 use thiserror::Error;
 
+/// Configuration-related errors.
+///
+/// Represents errors that can occur during configuration loading and parsing.
 #[derive(Error, Debug)]
 pub enum ConfigError {
   #[error(
@@ -13,4 +16,5 @@ pub enum ConfigError {
   Parse(String),
 }
 
+/// Result type for configuration operations.
 pub type ConfigResult<T> = Result<T, ConfigError>;

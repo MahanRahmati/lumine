@@ -1,5 +1,8 @@
 use thiserror::Error;
 
+/// Whisper transcription service errors.
+///
+/// Represents errors that can occur during audio transcription operations.
 #[derive(Error, Debug)]
 pub enum WhisperError {
   #[error(
@@ -54,4 +57,5 @@ pub enum WhisperError {
   VadModelNotFound,
 }
 
+/// Result type for Whisper operations.
 pub type WhisperResult<T> = Result<T, WhisperError>;

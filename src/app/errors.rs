@@ -1,5 +1,8 @@
 use thiserror::Error;
 
+/// Application runtime errors.
+///
+/// Represents high-level errors that can occur during application workflows.
 #[derive(Error, Debug)]
 pub enum RuntimeError {
   #[error("File Error: {0}. Please verify the file path and try again.")]
@@ -21,4 +24,5 @@ pub enum RuntimeError {
   Transcription(String),
 }
 
+/// Result type for application runtime operations.
 pub type RuntimeResult<T> = Result<T, RuntimeError>;

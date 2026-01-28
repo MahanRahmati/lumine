@@ -15,11 +15,17 @@ use crate::files::operations;
 use crate::network::{HttpClient, errors::NetworkError};
 use crate::whisper::errors::{WhisperError, WhisperResult};
 
+/// Response from the Whisper transcription service.
+///
+/// Contains the transcribed text from an audio file.
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct WhisperResponse {
   pub text: String,
 }
 
+/// Whisper transcription interface.
+///
+/// Handles both remote and local transcription of audio files using Whisper.
 #[derive(Debug, Clone)]
 pub struct Whisper {
   url: String,
@@ -30,6 +36,19 @@ pub struct Whisper {
 }
 
 impl Whisper {
+  /// Creates a new Whisper transcription instance.
+  ///
+  /// # Arguments
+  ///
+  /// * `url` - The Whisper service URL for remote transcription
+  /// * `model_path` - Path to local Whisper model (empty for remote mode)
+  /// * `vad_model_path` - Path to VAD model for speech filtering (optional)
+  /// * `file_path` - Path to the audio file to transcribe
+  /// * `verbose` - Whether to enable verbose output
+  ///
+  /// # Returns
+  ///
+  /// A new `Whisper` instance.
   pub fn new(
     url: String,
     model_path: String,
@@ -46,6 +65,14 @@ impl Whisper {
     };
   }
 
+  /// Transcribes the audio file using Whisper.
+  ///
+  /// Automatically chooses between remote and local transcription based on
+  /// whether a model path is configured.
+  ///
+  /// # Returns
+  ///
+  /// A `WhisperResult<String>` containing the transcribed text or an error.
   pub async fn transcribe(&self) -> WhisperResult<String> {
     if self.verbose {
       println!("Sending audio file to Whisper transcription service...");

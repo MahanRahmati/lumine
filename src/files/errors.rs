@@ -1,5 +1,8 @@
 use thiserror::Error;
 
+/// File operation errors.
+///
+/// Represents errors that can occur during file and directory operations.
 #[derive(Error, Debug)]
 pub enum FileError {
   #[error("Cannot create directory '{0}'. Please check permissions.")]
@@ -19,4 +22,5 @@ pub enum FileError {
   FileNotFound(String),
 }
 
+/// Result type for file operations.
 pub type FileResult<T> = Result<T, FileError>;

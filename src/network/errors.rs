@@ -1,5 +1,8 @@
 use thiserror::Error;
 
+/// Network-related errors.
+///
+/// Represents errors that can occur during HTTP requests and network communication.
 #[derive(Error, Debug)]
 pub enum NetworkError {
   #[error("Invalid service URL. Please check your configuration file.")]
@@ -21,4 +24,5 @@ pub enum NetworkError {
   DecodeError,
 }
 
+/// Result type for network operations.
 pub type NetworkResult<T> = Result<T, NetworkError>;
