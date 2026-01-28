@@ -1,5 +1,8 @@
 pub mod errors;
 
+#[cfg(test)]
+mod network_tests;
+
 use reqwest::multipart;
 
 use crate::network::errors::{NetworkError, NetworkResult};
