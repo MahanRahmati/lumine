@@ -26,6 +26,24 @@ You can also record an audio file directly:
 lumine record
 ```
 
+### Reset Configuration
+
+You can reset the configuration to default values:
+
+```bash
+lumine reset-config
+```
+
+## Build from Source
+
+```bash
+git clone https://github.com/MahanRahmati/lumine.git
+cd lumine
+cargo build --release
+```
+
+The compiled binary will be available at `target/release/lumine`.
+
 ## Configuration
 
 Lumine is configured using a toml configuration file.
@@ -55,7 +73,7 @@ verbose = false
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## Contributing
 
@@ -63,4 +81,8 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Support
 
-If you encounter any issues, please file an issue on the GitHub repository.
+If you encounter any issues, please file an [issue](https://github.com/MahanRahmati/lumine/issues) on the GitHub repository.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for version history and updates.
