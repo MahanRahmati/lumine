@@ -3,7 +3,8 @@ mod errors;
 use crate::app::errors::{RuntimeError, RuntimeResult};
 use crate::audio::Audio;
 use crate::config::Config;
-use crate::files::operations::{remove_file, validate_file_exists};
+use crate::files::operations::validate_file_exists;
+use crate::files::temporary::TemporaryFile;
 use crate::whisper::Whisper;
 
 pub struct App {
@@ -35,12 +36,14 @@ impl App {
     );
   }
 
-  async fn cleanup_file(&self, file_path: &str) {
+  async fn cleanup_file(&self, temp_file: &mut TemporaryFile) {
     if self.config.get_remove_after_transcript() {
-      let result = remove_file(file_path).await;
+      let result = temp_file.cleanup().await;
       if result.is_ok() && self.config.get_verbose() {
-        println!("File removed: {}", file_path);
+        println!("File removed: {}", temp_file.path());
       }
+    } else {
+      temp_file.keep();
     }
   }
 
@@ -58,13 +61,16 @@ impl App {
       .await
       .map_err(|e| RuntimeError::AudioConversion(e.to_string()))?;
 
-    let whisper = self.create_whisper_instance(converted_file_path.clone());
+    let mut temp_converted_file = TemporaryFile::new(converted_file_path);
+
+    let whisper =
+      self.create_whisper_instance(temp_converted_file.path().to_string());
     let transcript = whisper
       .transcribe()
       .await
       .map_err(|e| RuntimeError::Transcription(e.to_string()))?;
 
-    self.cleanup_file(&converted_file_path).await;
+    self.cleanup_file(&mut temp_converted_file).await;
 
     return Ok(transcript);
   }
@@ -76,22 +82,29 @@ impl App {
       .await
       .map_err(|e| RuntimeError::Recording(e.to_string()))?;
 
+    let mut temp_original_file = TemporaryFile::new(file_path.clone());
+
     let converted_file_path = audio
       .convert_audio(&file_path)
       .await
       .map_err(|e| RuntimeError::AudioConversion(e.to_string()))?;
 
-    self.cleanup_file(&file_path).await;
+    let mut temp_converted_file = TemporaryFile::new(converted_file_path);
 
     if self.config.get_verbose() {
       println!("File saved in: {}", self.config.get_recordings_directory());
       println!("Format: 16kHz mono WAV (Whisper-ready)");
     }
 
-    return Ok(format!(
+    let result = Ok(format!(
       "Audio recorded and converted successfully: {}",
-      converted_file_path
+      temp_converted_file.path()
     ));
+
+    self.cleanup_file(&mut temp_original_file).await;
+    temp_converted_file.keep();
+
+    return result;
   }
 
   pub async fn record_and_transcribe(&self) -> RuntimeResult<String> {
@@ -101,19 +114,24 @@ impl App {
       .await
       .map_err(|e| RuntimeError::Recording(e.to_string()))?;
 
+    let mut temp_original_file = TemporaryFile::new(file_path.clone());
+
     let converted_file_path = audio
       .convert_audio(&file_path)
       .await
       .map_err(|e| RuntimeError::AudioConversion(e.to_string()))?;
 
-    let whisper = self.create_whisper_instance(converted_file_path.clone());
+    let mut temp_converted_file = TemporaryFile::new(converted_file_path);
+
+    let whisper =
+      self.create_whisper_instance(temp_converted_file.path().to_string());
     let transcript = whisper
       .transcribe()
       .await
       .map_err(|e| RuntimeError::Transcription(e.to_string()))?;
 
-    self.cleanup_file(&file_path).await;
-    self.cleanup_file(&converted_file_path).await;
+    self.cleanup_file(&mut temp_original_file).await;
+    self.cleanup_file(&mut temp_converted_file).await;
 
     return Ok(transcript);
   }
