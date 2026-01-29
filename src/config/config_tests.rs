@@ -2,7 +2,10 @@ use crate::config::*;
 
 const VALID_CONFIG: &str = r#"
 [whisper]
+use_local = true
 url = "http://localhost:8080"
+model_path = ""
+vad_model_path = ""
 
 [recorder]
 recordings_directory = "test_recordings"
@@ -11,13 +14,16 @@ silence_detect_noise = 30
 preferred_audio_input_device = "test_device"
 
 [general]
-remove_after_transcript = false
+remove_after_transcript = true
 verbose = false
 "#;
 
 const INVALID_CONFIG: &str = r#"
 [whisper]
+use_local = true
 url = "http://localhost:8080"
+model_path = ""
+vad_model_path = ""
 
 [recorder]
 recordings_directory = "test_recordings"
@@ -32,6 +38,7 @@ verbose = false
 #[test]
 fn test_config_default() {
   let config = Config::default();
+  assert!(config.get_use_local());
   assert_eq!(config.get_whisper_url(), "http://127.0.0.1:9090");
   let recordings_dir = config.get_recordings_directory();
   assert!(recordings_dir.contains("recordings"));
@@ -75,12 +82,13 @@ fn test_parse_config_content() {
   assert!(result.is_ok());
 
   let config = result.unwrap();
+  assert!(config.get_use_local());
   assert_eq!(config.get_whisper_url(), "http://localhost:8080");
   assert_eq!(config.get_recordings_directory(), "test_recordings");
   assert_eq!(config.get_silence_limit(), 5);
   assert_eq!(config.get_silence_detect_noise(), 30);
   assert_eq!(config.get_preferred_audio_input_device(), "test_device");
-  assert!(!config.get_remove_after_transcript());
+  assert!(config.get_remove_after_transcript());
   assert!(!config.get_verbose());
 }
 
@@ -100,6 +108,7 @@ async fn test_config_reset_to_defaults() {
   assert!(result.is_ok(), "Reset to defaults should succeed");
 
   let config = Config::load().await.unwrap();
+  assert!(config.get_use_local());
   assert_eq!(config.get_whisper_url(), "http://127.0.0.1:9090");
   assert_eq!(config.get_silence_limit(), 2);
   assert_eq!(config.get_silence_detect_noise(), 40);

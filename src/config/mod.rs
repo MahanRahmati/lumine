@@ -12,6 +12,7 @@ use crate::files::operations;
 
 const DEFAULT_DIRECTORY: &str = "lumine";
 const DEFAULT_CONFIG_NAME: &str = "config.toml";
+const DEFAULT_USE_LOCAL: bool = true;
 const DEFAULT_WHISPER_URL: &str = "http://127.0.0.1:9090";
 const DEFAULT_SILENCE_LIMIT_SECONDS: i32 = 2;
 const DEFAULT_SILENCE_DETECT_NOISE_DB: i32 = 40;
@@ -35,6 +36,7 @@ pub struct Config {
 /// Contains settings for the Whisper API endpoint and model paths.
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct WhisperConfig {
+  pub use_local: Option<bool>,
   pub url: Option<String>,
   pub model_path: Option<String>,
   pub vad_model_path: Option<String>,
@@ -81,6 +83,18 @@ impl Config {
     let config_content = get_config_content(config_path).await?;
     let config = parse_config_content(config_content)?;
     return Ok(config);
+  }
+
+  /// Gets whether to use local Whisper transcription.
+  ///
+  /// Returns the configured setting or true. When enabled, the application
+  /// will use the local Whisper model for transcription.
+  ///
+  /// # Returns
+  ///
+  /// A `bool` indicating whether to use local transcription mode.
+  pub fn get_use_local(&self) -> bool {
+    return self.whisper.use_local.clone().unwrap_or(DEFAULT_USE_LOCAL);
   }
 
   /// Gets the Whisper service URL.
@@ -264,6 +278,7 @@ impl Default for Config {
   fn default() -> Self {
     return Config {
       whisper: WhisperConfig {
+        use_local: Some(DEFAULT_USE_LOCAL),
         url: Some(String::from(DEFAULT_WHISPER_URL)),
         model_path: Some(String::new()),
         vad_model_path: Some(String::new()),

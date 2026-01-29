@@ -56,6 +56,7 @@ The configuration file is loaded from XDG configuration directory.
 
 ```config.toml
 [whisper]
+use_local = true
 url = "http://127.0.0.1:9090"
 model_path = ""
 vad_model_path = ""

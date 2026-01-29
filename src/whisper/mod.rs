@@ -28,6 +28,7 @@ pub struct WhisperResponse {
 /// Handles both remote and local transcription of audio files using Whisper.
 #[derive(Debug, Clone)]
 pub struct Whisper {
+  use_local: bool,
   url: String,
   model_path: String,
   vad_model_path: String,
@@ -40,6 +41,7 @@ impl Whisper {
   ///
   /// # Arguments
   ///
+  /// * `use_local` - Whether to use the local Whisper model for transcription
   /// * `url` - The Whisper service URL for remote transcription
   /// * `model_path` - Path to local Whisper model (empty for remote mode)
   /// * `vad_model_path` - Path to VAD model for speech filtering (optional)
@@ -50,6 +52,7 @@ impl Whisper {
   ///
   /// A new `Whisper` instance.
   pub fn new(
+    use_local: bool,
     url: String,
     model_path: String,
     vad_model_path: String,
@@ -57,6 +60,7 @@ impl Whisper {
     verbose: bool,
   ) -> Self {
     return Whisper {
+      use_local,
       url,
       model_path,
       vad_model_path,
@@ -78,10 +82,10 @@ impl Whisper {
       println!("Sending audio file to Whisper transcription service...");
     }
 
-    let response = if self.model_path.is_empty() {
-      self.transcribe_remote().await?
-    } else {
+    let response = if self.use_local {
       self.transcribe_local().await?
+    } else {
+      self.transcribe_remote().await?
     };
 
     if self.verbose {
