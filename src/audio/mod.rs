@@ -1,10 +1,12 @@
 mod converter;
 mod devices;
 mod errors;
+mod platform;
 mod recorder;
 
 use crate::audio::converter::AudioConverter;
 use crate::audio::errors::AudioResult;
+use crate::audio::platform::get_platform;
 use crate::audio::recorder::AudioRecorder;
 
 #[derive(Debug, Clone)]
@@ -40,6 +42,7 @@ impl Audio {
       self.silence_detect_noise,
       self.preferred_audio_input_device.clone(),
       self.verbose,
+      get_platform(),
     );
     return recorder.record_audio().await;
   }

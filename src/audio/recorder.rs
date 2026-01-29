@@ -3,32 +3,34 @@ use std::process::Stdio;
 use std::sync::Arc;
 use std::time::Duration;
 
-use regex::Regex;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 
-use crate::audio::devices::{AudioInputDevice, AudioInputDevices};
+use crate::audio::devices::AudioInputDevice;
 use crate::audio::errors::{AudioError, AudioResult};
+use crate::audio::platform::AudioPlatform;
 use crate::files::operations;
 
 #[derive(Debug, Clone)]
-pub struct AudioRecorder {
+pub struct AudioRecorder<P: AudioPlatform> {
   recordings_directory: String,
   silence_limit: i32,
   silence_detect_noise: i32,
   preferred_audio_input_device: String,
   verbose: bool,
+  platform: P,
 }
 
-impl AudioRecorder {
+impl<P: AudioPlatform> AudioRecorder<P> {
   pub fn new(
     recordings_directory: String,
     silence_limit: i32,
     silence_detect_noise: i32,
     preferred_audio_input_device: String,
     verbose: bool,
+    platform: P,
   ) -> Self {
     return Self {
       recordings_directory,
@@ -36,13 +38,21 @@ impl AudioRecorder {
       silence_detect_noise,
       preferred_audio_input_device,
       verbose,
+      platform,
     };
   }
 
   pub async fn record_audio(&self) -> AudioResult<String> {
     self.check_ffmpeg().await?;
-    let devices = self.get_audio_input_devices().await?;
-    let device = self.select_audio_input_device(devices);
+    let devices = self.platform.get_audio_input_devices(self.verbose).await?;
+    let device = self
+      .platform
+      .select_audio_input_device(
+        devices,
+        self.preferred_audio_input_device.clone(),
+        self.verbose,
+      )
+      .await;
     return self.record_audio_with_device(device).await;
   }
 
@@ -65,85 +75,6 @@ impl AudioRecorder {
     return Err(AudioError::FFMPEGNotFound);
   }
 
-  async fn get_audio_input_devices(&self) -> AudioResult<AudioInputDevices> {
-    let output = tokio::process::Command::new("ffmpeg")
-      .args(["-f", "avfoundation", "-list_devices", "true", "-i", ""])
-      .output()
-      .await
-      .map_err(|_| AudioError::CouldNotExecuteFFMPEG)?;
-
-    let output_str = String::from_utf8_lossy(&output.stderr);
-    let mut audio_section = false;
-    let mut devices = Vec::new();
-
-    let regex = Regex::new(r"\[(\d+)\]\s+(.*)").unwrap();
-
-    for line in output_str.lines() {
-      if line.contains("AVFoundation audio devices") {
-        audio_section = true;
-        continue;
-      }
-
-      if audio_section
-        && let Some(caps) = regex.captures(line)
-        && caps.len() >= 3
-      {
-        let index = &caps[1];
-        let name = &caps[2];
-        devices.push(AudioInputDevice::new(
-          String::from(index),
-          String::from(name),
-        ));
-      }
-    }
-
-    if self.verbose {
-      println!("Audio Devices Found:");
-      for device in &devices {
-        println!("- {}", device.get_name());
-      }
-    }
-
-    return Ok(devices);
-  }
-
-  pub(crate) fn select_audio_input_device(
-    &self,
-    devices: AudioInputDevices,
-  ) -> AudioInputDevice {
-    let default_device = AudioInputDevice::default();
-
-    if self.preferred_audio_input_device.is_empty() {
-      if self.verbose {
-        println!(
-          "No preferred audio input device specified, using default device"
-        );
-      }
-      return default_device;
-    }
-
-    for device in devices {
-      if device
-        .get_name()
-        .contains(&self.preferred_audio_input_device)
-      {
-        if self.verbose {
-          println!(
-            "Selected preferred audio input device: {}",
-            device.get_name()
-          );
-        }
-        return device;
-      }
-    }
-
-    if self.verbose {
-      println!("No preferred audio input device found, using default device");
-    }
-
-    return default_device;
-  }
-
   async fn record_audio_with_device(
     &self,
     device: AudioInputDevice,
@@ -158,23 +89,15 @@ impl AudioRecorder {
       self.recordings_directory, timestamp
     );
 
+    let args = self.platform.build_ffmpeg_recording_arguments(
+      device.get_index().clone(),
+      self.silence_limit,
+      self.silence_detect_noise,
+      output_file.clone(),
+    );
+
     let mut child = Command::new("ffmpeg")
-      .args([
-        "-f",
-        "avfoundation",
-        "-i",
-        format!(":{}", device.get_index()).as_str(),
-        "-acodec",
-        "pcm_s16le",
-        "-af",
-        format!(
-          "silencedetect=n=-{}dB:d={}",
-          self.silence_detect_noise, self.silence_limit,
-        )
-        .as_str(),
-        output_file.as_str(),
-        "-y",
-      ])
+      .args(args)
       .stderr(Stdio::piped())
       .spawn()
       .map_err(|_| AudioError::CouldNotExecuteFFMPEG)?;
