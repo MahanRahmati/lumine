@@ -17,7 +17,7 @@ const DEFAULT_WHISPER_URL: &str = "http://127.0.0.1:9090";
 const DEFAULT_SILENCE_LIMIT_SECONDS: i32 = 2;
 const DEFAULT_SILENCE_DETECT_NOISE_DB: i32 = 40;
 const DEFAULT_RECORDINGS_DIRECTORY: &str = "recordings";
-const DEFAULT_REMOVE_AFTER_TRANSSRIPT: bool = true;
+const DEFAULT_REMOVE_AFTER_TRANSCRIPT: bool = true;
 const DEFAULT_VERBOSE: bool = false;
 
 /// Main configuration structure for the Lumine application.
@@ -215,7 +215,7 @@ impl Config {
     return self
       .general
       .remove_after_transcript
-      .unwrap_or(DEFAULT_REMOVE_AFTER_TRANSSRIPT);
+      .unwrap_or(DEFAULT_REMOVE_AFTER_TRANSCRIPT);
   }
 
   /// Gets whether verbose output is enabled.
@@ -290,7 +290,7 @@ impl Default for Config {
         preferred_audio_input_device: Some(String::new()),
       },
       general: GeneralConfig {
-        remove_after_transcript: Some(DEFAULT_REMOVE_AFTER_TRANSSRIPT),
+        remove_after_transcript: Some(DEFAULT_REMOVE_AFTER_TRANSCRIPT),
         verbose: Some(DEFAULT_VERBOSE),
       },
     };
