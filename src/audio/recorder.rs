@@ -13,6 +13,10 @@ use crate::audio::errors::{AudioError, AudioResult};
 use crate::audio::platform::AudioPlatform;
 use crate::files::operations;
 
+/// Generic audio recorder with platform-specific implementation.
+///
+/// Records audio using FFmpeg with silence detection and device management
+/// through platform-specific AudioPlatform implementations.
 #[derive(Debug, Clone)]
 pub struct AudioRecorder<P: AudioPlatform> {
   recordings_directory: String,
@@ -24,6 +28,20 @@ pub struct AudioRecorder<P: AudioPlatform> {
 }
 
 impl<P: AudioPlatform> AudioRecorder<P> {
+  /// Creates a new AudioRecorder with configuration and platform implementation.
+  ///
+  /// # Arguments
+  ///
+  /// * `recordings_directory` - Directory path to save audio recordings
+  /// * `silence_limit` - Seconds of silence before stopping recording
+  /// * `silence_detect_noise` - Noise threshold in decibels for silence detection
+  /// * `preferred_audio_input_device` - Name of preferred audio input device
+  /// * `verbose` - Whether to show detailed output during recording
+  /// * `platform` - Platform-specific implementation for audio operations
+  ///
+  /// # Returns
+  ///
+  /// A new `AudioRecorder<P>` instance.
   pub fn new(
     recordings_directory: String,
     silence_limit: i32,
@@ -42,6 +60,15 @@ impl<P: AudioPlatform> AudioRecorder<P> {
     };
   }
 
+  /// Records audio with silence detection using platform-specific implementation.
+  ///
+  /// Validates FFmpeg availability, selects appropriate audio device, and records
+  /// audio with automatic silence detection based on configured thresholds.
+  ///
+  /// # Returns
+  ///
+  /// An `AudioResult<String>` containing the path to the recorded audio file
+  /// or an error if recording failed.
   pub async fn record_audio(&self) -> AudioResult<String> {
     self.check_ffmpeg().await?;
     let devices = self.platform.get_audio_input_devices(self.verbose).await?;

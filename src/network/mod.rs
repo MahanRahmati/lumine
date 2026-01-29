@@ -7,6 +7,10 @@ use reqwest::multipart;
 
 use crate::network::errors::{NetworkError, NetworkResult};
 
+/// HTTP client for network requests to external services.
+///
+/// Provides generic POST functionality with multipart form support
+/// and verbose logging capabilities for debugging.
 #[derive(Debug, Clone)]
 pub struct HttpClient {
   base_url: String,
@@ -14,10 +18,37 @@ pub struct HttpClient {
 }
 
 impl HttpClient {
+  /// Creates a new HttpClient with base URL and verbose settings.
+  ///
+  /// # Arguments
+  ///
+  /// * `base_url` - Base URL for all HTTP requests
+  /// * `verbose` - Whether to show detailed request/response information
+  ///
+  /// # Returns
+  ///
+  /// A new `HttpClient` instance.
   pub fn new(base_url: String, verbose: bool) -> Self {
     return HttpClient { base_url, verbose };
   }
 
+  /// Sends a POST request with multipart form data to the given endpoint.
+  ///
+  /// Validates the service URL, sends the request with form data, and deserializes
+  /// the JSON response into the specified type.
+  ///
+  /// # Type Parameters
+  ///
+  /// * `T` - Type to deserialize the JSON response into
+  ///
+  /// # Arguments
+  ///
+  /// * `form` - Multipart form data to send in the request
+  /// * `endpoint` - Endpoint path to append to the base URL
+  ///
+  /// # Returns
+  ///
+  /// A `NetworkResult<T>` containing the deserialized response or an error.
   pub async fn post_with_form<T>(
     &self,
     form: multipart::Form,

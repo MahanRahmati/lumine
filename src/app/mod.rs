@@ -7,11 +7,24 @@ use crate::files::operations::validate_file_exists;
 use crate::files::temporary::TemporaryFile;
 use crate::whisper::Whisper;
 
+/// Main application orchestrator for Lumine.
+///
+/// Coordinates audio recording, conversion, and transcription operations
+/// using the provided configuration settings.
 pub struct App {
   config: Config,
 }
 
 impl App {
+  /// Creates a new App instance with the given configuration.
+  ///
+  /// # Arguments
+  ///
+  /// * `config` - Configuration containing all application settings
+  ///
+  /// # Returns
+  ///
+  /// A new `App` instance.
   pub fn new(config: Config) -> Self {
     return App { config };
   }
@@ -48,6 +61,18 @@ impl App {
     }
   }
 
+  /// Transcribes an existing audio file.
+  ///
+  /// Converts the input audio to Whisper-compatible format and performs
+  /// transcription using the configured Whisper service or local model.
+  ///
+  /// # Arguments
+  ///
+  /// * `file_path` - Path to the audio file to transcribe
+  ///
+  /// # Returns
+  ///
+  /// A `RuntimeResult<String>` containing the transcription text or an error.
   pub async fn transcribe_file(
     &self,
     file_path: &str,
@@ -76,6 +101,15 @@ impl App {
     return Ok(transcript);
   }
 
+  /// Records audio without transcription.
+  ///
+  /// Records audio using configured settings and converts it to Whisper-compatible
+  /// format, keeping both original and converted files based on configuration.
+  ///
+  /// # Returns
+  ///
+  /// A `RuntimeResult<String>` containing the path to the converted audio file
+  /// and a success message.
   pub async fn record_only(&self) -> RuntimeResult<String> {
     let audio = self.create_audio();
     let file_path = audio
@@ -108,6 +142,14 @@ impl App {
     return result;
   }
 
+  /// Records audio and transcribes it in sequence.
+  ///
+  /// Records audio using configured settings, converts it to Whisper-compatible
+  /// format, and performs transcription using the configured Whisper service.
+  ///
+  /// # Returns
+  ///
+  /// A `RuntimeResult<String>` containing the transcription text or an error.
   pub async fn record_and_transcribe(&self) -> RuntimeResult<String> {
     let audio = self.create_audio();
     let file_path = audio

@@ -3,9 +3,26 @@ use std::path::Path;
 use crate::audio::errors::{AudioError, AudioResult};
 use crate::files::operations;
 
+/// Handles audio format conversion for Whisper transcription.
+///
+/// Converts various audio formats to 16kHz mono WAV format required by Whisper.
 pub struct AudioConverter;
 
 impl AudioConverter {
+  /// Converts audio input file to Whisper-compatible format.
+  ///
+  /// Uses FFmpeg to convert any supported audio format to 16kHz mono WAV
+  /// format required by Whisper transcription service.
+  ///
+  /// # Arguments
+  ///
+  /// * `input_file` - Path to the input audio file
+  /// * `verbose` - Whether to show detailed output during conversion
+  ///
+  /// # Returns
+  ///
+  /// An `AudioResult<String>` containing the path to the converted WAV file
+  /// or an error if conversion failed.
   pub async fn convert_audio_for_whisper(
     input_file: &str,
     verbose: bool,

@@ -9,6 +9,10 @@ use crate::audio::errors::AudioResult;
 use crate::audio::platform::get_platform;
 use crate::audio::recorder::AudioRecorder;
 
+/// Main audio recording and conversion coordinator.
+///
+/// Coordinates audio recording and format conversion operations using platform-specific
+/// implementations and configured settings.
 #[derive(Debug, Clone)]
 pub struct Audio {
   recordings_directory: String,
@@ -19,6 +23,19 @@ pub struct Audio {
 }
 
 impl Audio {
+  /// Creates a new Audio instance with recording configuration.
+  ///
+  /// # Arguments
+  ///
+  /// * `recordings_directory` - Directory path to save audio recordings
+  /// * `silence_limit` - Seconds of silence before stopping recording
+  /// * `silence_detect_noise` - Noise threshold in decibels for silence detection
+  /// * `preferred_audio_input_device` - Name of preferred audio input device
+  /// * `verbose` - Whether to show detailed output during operations
+  ///
+  /// # Returns
+  ///
+  /// A new `Audio` instance configured with the provided settings.
   pub fn new(
     recordings_directory: String,
     silence_limit: i32,
@@ -35,6 +52,15 @@ impl Audio {
     };
   }
 
+  /// Records audio using configured settings and platform implementation.
+  ///
+  /// Delegates to a platform-specific AudioRecorder for actual recording
+  /// with silence detection and device management.
+  ///
+  /// # Returns
+  ///
+  /// An `AudioResult<String>` containing the path to the recorded audio file
+  /// or an error if recording failed.
   pub async fn record_audio(&self) -> AudioResult<String> {
     let recorder = AudioRecorder::new(
       self.recordings_directory.clone(),
@@ -47,6 +73,19 @@ impl Audio {
     return recorder.record_audio().await;
   }
 
+  /// Converts audio input file to Whisper-compatible format.
+  ///
+  /// Delegates to AudioConverter to transform input audio to 16kHz mono WAV
+  /// format required by Whisper transcription service.
+  ///
+  /// # Arguments
+  ///
+  /// * `input_file` - Path to the audio file to convert
+  ///
+  /// # Returns
+  ///
+  /// An `AudioResult<String>` containing the path to the converted audio file
+  /// or an error if conversion failed.
   pub async fn convert_audio(&self, input_file: &str) -> AudioResult<String> {
     return AudioConverter::convert_audio_for_whisper(input_file, self.verbose)
       .await;

@@ -4,9 +4,15 @@ use crate::audio::devices::{AudioInputDevice, AudioInputDevices};
 use crate::audio::errors::{AudioError, AudioResult};
 use crate::audio::platform::AudioPlatform;
 
+/// Linux implementation of AudioPlatform trait.
 pub struct LinuxPlatform {}
 
 impl LinuxPlatform {
+  /// Creates a new LinuxPlatform instance.
+  ///
+  /// # Returns
+  ///
+  /// A new `LinuxPlatform` instance.
   pub fn new() -> Self {
     return Self {};
   }
