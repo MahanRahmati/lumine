@@ -94,7 +94,7 @@ impl Config {
   ///
   /// A `bool` indicating whether to use local transcription mode.
   pub fn get_use_local(&self) -> bool {
-    return self.whisper.use_local.clone().unwrap_or(DEFAULT_USE_LOCAL);
+    return self.whisper.use_local.unwrap_or(DEFAULT_USE_LOCAL);
   }
 
   /// Gets the Whisper service URL.
