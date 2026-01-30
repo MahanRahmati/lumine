@@ -7,7 +7,7 @@ use crate::audio::platform::AudioPlatform;
 /// macOS implementation of AudioPlatform trait.
 ///
 /// Provides macOS-specific audio device enumeration and recording using AVFoundation framework.
-pub struct MacOSPlatform {}
+pub(crate) struct MacOSPlatform {}
 
 impl MacOSPlatform {
   /// Creates a new MacOSPlatform instance.

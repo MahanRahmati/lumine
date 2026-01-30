@@ -5,7 +5,7 @@ use crate::audio::errors::{AudioError, AudioResult};
 use crate::audio::platform::AudioPlatform;
 
 /// Linux implementation of AudioPlatform trait.
-pub struct LinuxPlatform {}
+pub(crate) struct LinuxPlatform {}
 
 impl LinuxPlatform {
   /// Creates a new LinuxPlatform instance.

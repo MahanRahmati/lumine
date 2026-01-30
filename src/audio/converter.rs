@@ -6,7 +6,7 @@ use crate::files::operations;
 /// Handles audio format conversion for Whisper transcription.
 ///
 /// Converts various audio formats to 16kHz mono WAV format required by Whisper.
-pub struct AudioConverter;
+pub(crate) struct AudioConverter;
 
 impl AudioConverter {
   /// Converts audio input file to Whisper-compatible format.

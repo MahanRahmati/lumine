@@ -18,7 +18,7 @@ use crate::files::operations;
 /// Records audio using FFmpeg with silence detection and device management
 /// through platform-specific AudioPlatform implementations.
 #[derive(Debug, Clone)]
-pub struct AudioRecorder<P: AudioPlatform> {
+pub(crate) struct AudioRecorder<P: AudioPlatform> {
   recordings_directory: String,
   silence_limit: i32,
   silence_detect_noise: i32,
