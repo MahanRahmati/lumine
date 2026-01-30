@@ -218,10 +218,8 @@ impl Whisper {
     let audio = if spec.channels == 1 {
       audio
     } else if spec.channels == 2 {
-      match whisper_rs::convert_stereo_to_mono_audio(&audio) {
-        Ok(output) => output,
-        Err(_) => return Err(WhisperError::AudioConversionFailed),
-      }
+      whisper_rs::convert_stereo_to_mono_audio(&audio)
+        .map_err(|_| WhisperError::AudioConversionFailed)?
     } else {
       return Err(WhisperError::UnsupportedAudioFormat);
     };
