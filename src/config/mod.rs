@@ -98,9 +98,7 @@ impl Config {
         return Ok(default_config);
       }
     };
-    let config_content = get_config_content(config_path).await?;
-    let config = parse_config_content(config_content)?;
-    return Ok(config);
+    return Config::load_from_path(config_path).await;
   }
 
   /// Gets whether to use local Whisper transcription.
@@ -258,38 +256,83 @@ impl Config {
   /// A `ConfigResult<()>` indicating success or failure.
   pub async fn reset_to_defaults() -> ConfigResult<()> {
     let default_config = Config::default();
-    return save_config(default_config).await;
+    let xdg_dirs = BaseDirectories::with_prefix(DEFAULT_DIRECTORY);
+    let config_path = xdg_dirs
+      .place_config_file(DEFAULT_CONFIG_NAME)
+      .map_err(|e| ConfigError::FileRead(e.to_string()))?;
+    return Config::save_to_path(default_config, config_path).await;
   }
-}
 
-async fn get_config_content(config_path: PathBuf) -> ConfigResult<String> {
-  return operations::read_to_string(&config_path.to_string_lossy())
-    .await
-    .map_err(|e| ConfigError::FileRead(e.to_string()));
-}
+  /// Loads configuration from a specific file path.
+  ///
+  /// This method is intended for testing purposes to allow loading
+  /// configuration from temporary directories instead of the user's
+  /// real config directory.
+  ///
+  /// # Arguments
+  ///
+  /// * `config_path` - Path to the configuration file to load
+  ///
+  /// # Returns
+  ///
+  /// A `ConfigResult<Config>` containing the loaded configuration or an error.
+  pub(crate) async fn load_from_path(
+    config_path: PathBuf,
+  ) -> ConfigResult<Config> {
+    let config_content =
+      operations::read_to_string(&config_path.to_string_lossy())
+        .await
+        .map_err(|e| ConfigError::FileRead(e.to_string()))?;
+    let config = toml::from_str(&config_content)
+      .map_err(|e| ConfigError::Parse(e.to_string()))?;
+    return Ok(config);
+  }
 
-fn parse_config_content(config_content: String) -> ConfigResult<Config> {
-  return toml::from_str(&config_content)
-    .map_err(|e| ConfigError::Parse(e.to_string()));
-}
+  /// Saves configuration to a specific file path.
+  ///
+  /// This method is intended for testing purposes to allow saving
+  /// configuration to temporary directories instead of the user's
+  /// real config directory.
+  ///
+  /// # Arguments
+  ///
+  /// * `config` - The configuration to save
+  /// * `config_path` - Path where the configuration should be saved
+  ///
+  /// # Returns
+  ///
+  /// A `ConfigResult<()>` indicating success or failure.
+  pub(crate) async fn save_to_path(
+    config: Config,
+    config_path: PathBuf,
+  ) -> ConfigResult<()> {
+    let config_content = toml::to_string_pretty(&config)
+      .map_err(|e| ConfigError::Parse(e.to_string()))?;
+    tokio::fs::write(&config_path, config_content)
+      .await
+      .map_err(|e| ConfigError::FileRead(e.to_string()))?;
+    return Ok(());
+  }
 
-async fn save_config(config: Config) -> ConfigResult<()> {
-  let xdg_dirs = BaseDirectories::with_prefix(DEFAULT_DIRECTORY);
-
-  let config_path = match xdg_dirs.place_config_file(DEFAULT_CONFIG_NAME) {
-    Ok(path) => path,
-    Err(e) => return Err(ConfigError::FileRead(e.to_string())),
-  };
-
-  let config_content = match toml::to_string_pretty(&config) {
-    Ok(content) => content,
-    Err(e) => return Err(ConfigError::Parse(e.to_string())),
-  };
-
-  match tokio::fs::write(&config_path, config_content).await {
-    Ok(_) => return Ok(()),
-    Err(e) => return Err(ConfigError::FileRead(e.to_string())),
-  };
+  /// Resets configuration to defaults at a specific path.
+  ///
+  /// This method is intended for testing purposes to reset configuration
+  /// in temporary directories instead of the user's real config directory.
+  ///
+  /// # Arguments
+  ///
+  /// * `config_path` - Path where the default configuration should be saved
+  ///
+  /// # Returns
+  ///
+  /// A `ConfigResult<()>` indicating success or failure.
+  #[cfg(test)]
+  pub(crate) async fn reset_to_defaults_at_path(
+    config_path: PathBuf,
+  ) -> ConfigResult<()> {
+    let default_config = Config::default();
+    return Config::save_to_path(default_config, config_path).await;
+  }
 }
 
 impl Default for Config {
