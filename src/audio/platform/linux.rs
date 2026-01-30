@@ -105,13 +105,22 @@ impl AudioPlatform for LinuxPlatform {
     device_index: String,
     silence_limit: i32,
     silence_detect_noise: i32,
+    max_recording_duration: i32,
     output_file: String,
   ) -> Vec<String> {
-    let args = vec![
+    let mut args = vec![
       "-f".to_string(),
       "pulse".to_string(),
       "-i".to_string(),
       format!(":{}", device_index),
+    ];
+
+    if max_recording_duration > 0 {
+      args.push("-t".to_string());
+      args.push(format!("{}", max_recording_duration));
+    }
+
+    args.extend(vec![
       "-acodec".to_string(),
       "pcm_s16le".to_string(),
       "-af".to_string(),
@@ -121,7 +130,8 @@ impl AudioPlatform for LinuxPlatform {
       ),
       output_file,
       "-y".to_string(),
-    ];
+    ]);
+
     return args;
   }
 }

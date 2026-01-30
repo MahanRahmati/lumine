@@ -40,6 +40,7 @@ pub struct Audio {
   silence_detect_noise: i32,
   preferred_audio_input_device: String,
   verbose: bool,
+  max_recording_duration: i32,
 }
 
 impl Audio {
@@ -52,6 +53,7 @@ impl Audio {
   /// * `silence_detect_noise` - Noise threshold in decibels for silence detection
   /// * `preferred_audio_input_device` - Name of preferred audio input device
   /// * `verbose` - Whether to show detailed output during operations
+  /// * `max_recording_duration` - Maximum recording duration in seconds (0 for unlimited)
   ///
   /// # Returns
   ///
@@ -62,6 +64,7 @@ impl Audio {
     silence_detect_noise: i32,
     preferred_audio_input_device: String,
     verbose: bool,
+    max_recording_duration: i32,
   ) -> Self {
     return Audio {
       recordings_directory,
@@ -69,6 +72,7 @@ impl Audio {
       silence_detect_noise,
       preferred_audio_input_device,
       verbose,
+      max_recording_duration,
     };
   }
 
@@ -88,6 +92,7 @@ impl Audio {
       self.silence_detect_noise,
       self.preferred_audio_input_device.clone(),
       self.verbose,
+      self.max_recording_duration,
       get_platform(),
     );
     return recorder.record_audio().await;

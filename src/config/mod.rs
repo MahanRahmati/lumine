@@ -35,6 +35,7 @@ const DEFAULT_WHISPER_URL: &str = "http://127.0.0.1:9090";
 const DEFAULT_SILENCE_LIMIT_SECONDS: i32 = 2;
 const DEFAULT_SILENCE_DETECT_NOISE_DB: i32 = 40;
 const DEFAULT_RECORDINGS_DIRECTORY: &str = "recordings";
+const DEFAULT_MAX_RECORDING_DURATION_SECONDS: i32 = 60;
 const DEFAULT_REMOVE_AFTER_TRANSCRIPT: bool = true;
 const DEFAULT_VERBOSE: bool = false;
 
@@ -69,6 +70,7 @@ pub struct RecorderConfig {
   pub silence_limit: Option<i32>,
   pub silence_detect_noise: Option<i32>,
   pub preferred_audio_input_device: Option<String>,
+  pub max_recording_duration: Option<i32>,
 }
 
 /// General application configuration.
@@ -219,6 +221,23 @@ impl Config {
       .unwrap_or_default();
   }
 
+  /// Gets the maximum recording duration in seconds.
+  ///
+  /// Returns the configured duration limit or the default value of 60 seconds.
+  /// A value of 0 or negative means unlimited duration (only silence detection stops recording).
+  ///
+  /// # Returns
+  ///
+  /// An `i32` containing the maximum recording duration in seconds.
+  /// Returns 0 if unlimited, or a positive value for the duration limit.
+  pub fn get_max_recording_duration(&self) -> i32 {
+    match self.recorder.max_recording_duration {
+      None => DEFAULT_MAX_RECORDING_DURATION_SECONDS,
+      Some(d) if d <= 0 => 0,
+      Some(d) => d,
+    }
+  }
+
   /// Gets whether to remove audio files after transcription.
   ///
   /// Returns the configured setting or the default value of true.
@@ -349,6 +368,7 @@ impl Default for Config {
         silence_limit: Some(DEFAULT_SILENCE_LIMIT_SECONDS),
         silence_detect_noise: Some(DEFAULT_SILENCE_DETECT_NOISE_DB),
         preferred_audio_input_device: Some(String::new()),
+        max_recording_duration: Some(DEFAULT_MAX_RECORDING_DURATION_SECONDS),
       },
       general: GeneralConfig {
         remove_after_transcript: Some(DEFAULT_REMOVE_AFTER_TRANSCRIPT),

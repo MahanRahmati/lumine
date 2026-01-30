@@ -47,6 +47,7 @@ pub trait AudioPlatform {
   /// * `device_index` - Platform-specific device identifier
   /// * `silence_limit` - Seconds of silence before stopping
   /// * `silence_detect_noise` - Noise threshold in dB for silence detection
+  /// * `max_recording_duration` - Maximum recording duration in seconds (0 = unlimited)
   /// * `output_file` - Path to output audio file
   ///
   /// # Returns
@@ -57,6 +58,7 @@ pub trait AudioPlatform {
     device_index: String,
     silence_limit: i32,
     silence_detect_noise: i32,
+    max_recording_duration: i32,
     output_file: String,
   ) -> Vec<String>;
 }

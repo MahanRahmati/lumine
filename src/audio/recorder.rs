@@ -24,6 +24,7 @@ pub(crate) struct AudioRecorder<P: AudioPlatform> {
   silence_detect_noise: i32,
   preferred_audio_input_device: String,
   verbose: bool,
+  max_recording_duration: i32,
   platform: P,
 }
 
@@ -37,6 +38,7 @@ impl<P: AudioPlatform> AudioRecorder<P> {
   /// * `silence_detect_noise` - Noise threshold in decibels for silence detection
   /// * `preferred_audio_input_device` - Name of preferred audio input device
   /// * `verbose` - Whether to show detailed output during recording
+  /// * `max_recording_duration` - Maximum recording duration in seconds (0 for unlimited)
   /// * `platform` - Platform-specific implementation for audio operations
   ///
   /// # Returns
@@ -48,6 +50,7 @@ impl<P: AudioPlatform> AudioRecorder<P> {
     silence_detect_noise: i32,
     preferred_audio_input_device: String,
     verbose: bool,
+    max_recording_duration: i32,
     platform: P,
   ) -> Self {
     return Self {
@@ -56,6 +59,7 @@ impl<P: AudioPlatform> AudioRecorder<P> {
       silence_detect_noise,
       preferred_audio_input_device,
       verbose,
+      max_recording_duration,
       platform,
     };
   }
@@ -120,6 +124,7 @@ impl<P: AudioPlatform> AudioRecorder<P> {
       device.get_index().clone(),
       self.silence_limit,
       self.silence_detect_noise,
+      self.max_recording_duration,
       output_file.clone(),
     );
 
@@ -138,6 +143,12 @@ impl<P: AudioPlatform> AudioRecorder<P> {
         "Recording... will stop after {}s of silence",
         self.silence_limit
       );
+      if self.max_recording_duration > 0 {
+        println!(
+          "Maximum recording duration: {} seconds",
+          self.max_recording_duration
+        );
+      }
     }
 
     let stderr = child

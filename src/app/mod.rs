@@ -55,6 +55,7 @@ impl App {
       self.config.get_silence_detect_noise(),
       self.config.get_preferred_audio_input_device(),
       self.config.get_verbose(),
+      self.config.get_max_recording_duration(),
     );
   }
 

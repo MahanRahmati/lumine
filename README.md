@@ -66,6 +66,7 @@ recordings_directory = ""
 silence_limit = 2
 silence_detect_noise = 40
 preferred_audio_input_device = ""
+max_recording_duration = 60
 
 [general]
 remove_after_transcript = true
