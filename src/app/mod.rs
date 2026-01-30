@@ -1,3 +1,22 @@
+//! Application orchestration module for Lumine.
+//!
+//! This module provides the main application logic that coordinates audio recording,
+//! file management, and transcription workflows. It serves as the high-level coordinator
+//! between the audio capture system, file operations, and Whisper transcription service.
+//!
+//! ## Main Components
+//!
+//! - [`App`]: The primary application orchestrator that manages all workflows
+//! - [`RuntimeError`]: Error types for application-level failures
+//! - [`RuntimeResult<T>`]: Result type alias for application operations
+//!
+//! ## Workflows
+//!
+//! The `App` struct provides three main workflows:
+//! - **Record and Transcribe**: Record audio and immediately transcribe it
+//! - **Record Only**: Record audio and save to configured directory
+//! - **Transcribe File**: Process an existing audio file for transcription
+
 mod errors;
 
 use crate::app::errors::{RuntimeError, RuntimeResult};

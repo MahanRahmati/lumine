@@ -1,3 +1,28 @@
+//! Whisper transcription module for audio-to-text conversion.
+//!
+//! This module provides audio transcription using OpenAI's Whisper model.
+//! It supports both remote HTTP API transcription and local model inference
+//! using the `whisper-rs` crate. Includes optional VAD (Voice Activity Detection)
+//! preprocessing for improved accuracy.
+//!
+//! ## Main Components
+//!
+//! - [`Whisper`]: Main transcription interface
+//! - [`WhisperResponse`]: Response structure containing transcribed text
+//! - [`WhisperError`]: Error types for transcription failures
+//! - [`WhisperResult<T>`]: Result type alias for transcription operations
+//!
+//! ## Transcription Modes
+//!
+//! - **Remote**: Send audio to HTTP API endpoint
+//! - **Local**: Run inference with local Whisper model
+//!
+//! ## Audio Requirements
+//!
+//! - Sample rate: 16kHz (automatically validated)
+//! - Channels: Mono or stereo (stereo converted to mono)
+//! - Format: WAV PCM 16-bit
+
 mod errors;
 
 #[cfg(test)]

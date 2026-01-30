@@ -1,3 +1,21 @@
+//! Configuration management module with XDG compliance.
+//!
+//! This module handles loading, parsing, and accessing application configuration
+//! from TOML files stored in XDG-compliant directories. It provides default values
+//! for all settings and supports configuration reset operations.
+//!
+//! ## Configuration Sections
+//!
+//! - [`WhisperConfig`]: Whisper transcription service settings
+//! - [`RecorderConfig`]: Audio recording parameters
+//! - [`GeneralConfig`]: General application behavior settings
+//!
+//! ## Configuration File Location
+//!
+//! Configuration is loaded from:
+//! - `$XDG_CONFIG_HOME/lumine/config.toml`
+//! - Falls back to defaults if no config file exists
+
 pub mod errors;
 
 #[cfg(test)]

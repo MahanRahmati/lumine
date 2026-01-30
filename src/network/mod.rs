@@ -1,3 +1,22 @@
+//! HTTP client module for network requests to external services.
+//!
+//! This module provides a simple HTTP client for communicating with remote
+//! services, primarily the Whisper transcription API. It supports multipart
+//! form uploads and JSON response parsing.
+//!
+//! ## Main Components
+//!
+//! - [`HttpClient`]: HTTP client for making requests to external services
+//! - [`NetworkError`]: Error types for network operations
+//! - [`NetworkResult<T>`]: Result type alias for network operations
+//!
+//! ## Features
+//!
+//! - POST requests with multipart form data
+//! - JSON response deserialization
+//! - URL validation before requests
+//! - Verbose logging support for debugging
+
 pub mod errors;
 
 #[cfg(test)]

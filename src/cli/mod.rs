@@ -1,3 +1,16 @@
+//! Command-line interface and argument parsing module.
+//!
+//! This module defines the CLI structure using `clap` for parsing command-line
+//! arguments and subcommands. It provides type-safe argument handling and
+//! automatic help generation.
+//!
+//! ## Commands
+//!
+//! - **Default (no subcommand)**: Record audio and transcribe
+//! - `transcribe --file <path>`: Transcribe an existing audio file
+//! - `record`: Record audio and save to file only
+//! - `reset-config`: Reset configuration to default values
+
 #[cfg(test)]
 mod cli_tests;
 

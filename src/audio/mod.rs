@@ -1,3 +1,23 @@
+//! Audio recording and format conversion module.
+//!
+//! This module handles all audio-related operations including device detection,
+//! audio recording with silence detection, and format conversion for Whisper
+//! compatibility. It provides platform-specific implementations for macOS and Linux.
+//!
+//! ## Module Structure
+//!
+//! - [`Audio`]: Main coordinator for recording and conversion operations
+//! - [`AudioRecorder`]: Platform-specific audio recording implementation
+//! - [`AudioConverter`]: Audio format conversion to Whisper-compatible format
+//! - [`AudioInputDevice`]: Represents available audio input devices
+//! - [`AudioPlatform`]: Platform abstraction trait (macOS/Linux)
+//!
+//! ## Platform Support
+//!
+//! - **macOS**: Uses AVFoundation framework via FFmpeg
+//! - **Linux**: Uses PulseAudio via FFmpeg
+//! - **Windows**: Not supported (compile-time error)
+
 mod converter;
 mod devices;
 mod errors;
