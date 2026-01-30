@@ -34,6 +34,15 @@ You can reset the configuration to default values:
 lumine reset-config
 ```
 
+## Requirements
+
+### macOS
+- FFmpeg (required for audio recording and format conversion)
+
+### Linux
+- FFmpeg (required for audio recording and format conversion)
+- PulseAudio (required for audio capture)
+
 ## Build from Source
 
 ```bash
