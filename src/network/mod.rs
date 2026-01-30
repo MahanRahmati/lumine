@@ -84,12 +84,9 @@ impl HttpClient {
       return Err(NetworkError::ResponseError);
     }
 
-    let response_text = response
-      .text()
+    let parsed_response = response
+      .json::<T>()
       .await
-      .map_err(|_| NetworkError::DecodeError)?;
-
-    let parsed_response: T = serde_json::from_str(&response_text)
       .map_err(|_| NetworkError::DecodeError)?;
 
     return Ok(parsed_response);
