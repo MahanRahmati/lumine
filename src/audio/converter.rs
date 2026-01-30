@@ -29,7 +29,7 @@ impl AudioConverter {
   ) -> AudioResult<String> {
     operations::validate_file_exists(input_file)
       .await
-      .map_err(|_| AudioError::FileNotFound)?;
+      .map_err(|_| AudioError::FileNotFound(input_file.to_string()))?;
 
     let input_path = Path::new(input_file);
     let parent_dir = input_path.parent().unwrap_or_else(|| Path::new("."));

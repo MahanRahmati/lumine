@@ -126,7 +126,7 @@ impl Whisper {
 
     operations::validate_file_exists(&self.file_path)
       .await
-      .map_err(|_| WhisperError::FileNotFound)?;
+      .map_err(|_| WhisperError::FileNotFound(self.file_path.clone()))?;
 
     if self.verbose {
       println!("Preparing multipart form for audio file upload...");
@@ -158,7 +158,7 @@ impl Whisper {
       Err(network_error) => {
         let whisper_error = match network_error {
           NetworkError::RequestFailed => WhisperError::RequestFailed,
-          NetworkError::InvalidURL => WhisperError::InvalidURL,
+          NetworkError::InvalidURL(url) => WhisperError::InvalidURL(url),
           NetworkError::ResponseError => WhisperError::ResponseError,
           NetworkError::DecodeError => WhisperError::DecodeError,
         };
@@ -176,7 +176,7 @@ impl Whisper {
 
     operations::validate_file_exists(&self.file_path)
       .await
-      .map_err(|_| WhisperError::FileNotFound)?;
+      .map_err(|_| WhisperError::FileNotFound(self.file_path.clone()))?;
 
     if self.verbose {
       println!("Loading Whisper model...");
@@ -197,7 +197,7 @@ impl Whisper {
     }
 
     let reader = WavReader::open(&self.file_path)
-      .map_err(|_| WhisperError::FileNotFound)?;
+      .map_err(|_| WhisperError::FileNotFound(self.file_path.clone()))?;
 
     let spec = reader.spec();
     if spec.sample_rate != 16000 {

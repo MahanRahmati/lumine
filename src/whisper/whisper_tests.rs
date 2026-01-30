@@ -28,7 +28,7 @@ async fn test_send_audio() {
       assert!(!transcript.is_empty());
     }
     Err(error) => match error {
-      WhisperError::InvalidURL
+      WhisperError::InvalidURL(_)
       | WhisperError::RequestFailed
       | WhisperError::ResponseError => (),
       _ => panic!("Expected network-related error, got: {:?}", error),
@@ -51,7 +51,7 @@ async fn test_send_audio_file_not_found() {
   let result = whisper.transcribe().await;
   assert!(result.is_err());
   match result.unwrap_err() {
-    WhisperError::FileNotFound => (),
+    WhisperError::FileNotFound(_) => (),
     _ => panic!("Expected FileNotFound error"),
   }
 }
@@ -78,7 +78,7 @@ async fn test_send_audio_with_sample_file_invalid_url() {
   let result = whisper.transcribe().await;
   assert!(result.is_err());
   match result.unwrap_err() {
-    WhisperError::InvalidURL => (),
+    WhisperError::InvalidURL(_) => (),
     _ => panic!("Expected InvalidURL error"),
   }
 }

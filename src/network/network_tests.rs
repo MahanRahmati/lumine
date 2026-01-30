@@ -16,7 +16,7 @@ async fn test_check_url_invalid_format() {
 
   assert!(result.is_err());
   match result.unwrap_err() {
-    NetworkError::InvalidURL => {}
+    NetworkError::InvalidURL(_) => {}
     _ => panic!("Expected InvalidURL error"),
   }
 }
@@ -28,7 +28,7 @@ async fn test_check_url_invalid_format_verbose() {
 
   assert!(result.is_err());
   match result.unwrap_err() {
-    NetworkError::InvalidURL => {}
+    NetworkError::InvalidURL(_) => {}
     _ => panic!("Expected InvalidURL error"),
   }
 }
@@ -41,7 +41,7 @@ async fn test_check_url_unreachable_service() {
   assert!(result.is_err());
   match result.unwrap_err() {
     NetworkError::RequestFailed => {}
-    NetworkError::InvalidURL => {}
+    NetworkError::InvalidURL(_) => {}
     _ => panic!("Expected RequestFailed or InvalidURL error"),
   }
 }
@@ -55,7 +55,7 @@ async fn test_post_with_form_invalid_endpoint() {
     client.post_with_form(form, "test").await;
   assert!(result.is_err());
   match result.unwrap_err() {
-    NetworkError::InvalidURL => {}
+    NetworkError::InvalidURL(_) => {}
     _ => panic!("Expected InvalidURL error"),
   }
 }
@@ -70,7 +70,7 @@ async fn test_post_with_form_unreachable_service() {
   assert!(result.is_err());
   match result.unwrap_err() {
     NetworkError::RequestFailed => {}
-    NetworkError::InvalidURL => {}
+    NetworkError::InvalidURL(_) => {}
     _ => panic!("Expected RequestFailed or InvalidURL error"),
   }
 }

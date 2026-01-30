@@ -5,8 +5,8 @@ use thiserror::Error;
 /// Represents errors that can occur during HTTP requests and network communication.
 #[derive(Error, Debug)]
 pub enum NetworkError {
-  #[error("Invalid service URL. Please check your configuration file.")]
-  InvalidURL,
+  #[error("Invalid service URL: '{0}'. Please check your configuration file.")]
+  InvalidURL(String),
 
   #[error(
     "Failed to connect to service. Please verify the service is running and accessible."

@@ -5,22 +5,16 @@ use thiserror::Error;
 /// Represents high-level errors that can occur during application workflows.
 #[derive(Error, Debug)]
 pub enum RuntimeError {
-  #[error("File Error: {0}. Please verify the file path and try again.")]
+  #[error("File Error: {0}")]
   File(String),
 
-  #[error(
-    "Recording Error: {0}. Please verify the recording settings and try again."
-  )]
+  #[error("Recording Error: {0}")]
   Recording(String),
 
-  #[error(
-    "Audio Conversion Error: {0}. Please verify the audio settings and try again."
-  )]
+  #[error("Audio Conversion Error: {0}")]
   AudioConversion(String),
 
-  #[error(
-    "Transcription Error: {0}. Please check the audio file and model compatibility."
-  )]
+  #[error("Transcription Error: {0}")]
   Transcription(String),
 }
 

@@ -18,7 +18,7 @@ pub enum FileError {
   )]
   FileRead(String),
 
-  #[error("File not found: {0}. Please verify the file path and try again.")]
+  #[error("File not found: '{0}'. Please verify the file path and try again.")]
   FileNotFound(String),
 }
 

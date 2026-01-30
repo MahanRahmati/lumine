@@ -6,12 +6,14 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum WhisperError {
   #[error(
-    "Audio file not found. Please ensure the file exists and is readable."
+    "Audio file not found: '{0}'. Please ensure the file exists and is readable."
   )]
-  FileNotFound,
+  FileNotFound(String),
 
-  #[error("Invalid Whisper service URL. Please check your configuration file.")]
-  InvalidURL,
+  #[error(
+    "Invalid Whisper service URL: '{0}'. Please check your configuration file."
+  )]
+  InvalidURL(String),
 
   #[error(
     "Failed to connect to Whisper service. Please verify the service is running and accessible."

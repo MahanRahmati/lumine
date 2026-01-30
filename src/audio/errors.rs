@@ -5,8 +5,8 @@ use thiserror::Error;
 /// Represents errors that can occur during audio recording and conversion operations.
 #[derive(Error, Debug)]
 pub enum AudioError {
-  #[error("Audio file not found. Please check the file path.")]
-  FileNotFound,
+  #[error("Audio file not found: '{0}'. Please check the file path.")]
+  FileNotFound(String),
 
   #[error(
     "Failed to convert audio to Whisper format. Please check FFmpeg installation and file permissions."

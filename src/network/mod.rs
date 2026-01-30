@@ -120,7 +120,7 @@ impl HttpClient {
       if self.verbose {
         println!("Invalid URL format: {}", e);
       }
-      NetworkError::InvalidURL
+      NetworkError::InvalidURL(self.base_url.clone())
     })?;
 
     let client = reqwest::Client::new();
@@ -139,7 +139,7 @@ impl HttpClient {
       if self.verbose {
         println!("URL returned unexpected status: {}", status);
       }
-      return Err(NetworkError::InvalidURL);
+      return Err(NetworkError::InvalidURL(self.base_url.clone()));
     }
 
     if self.verbose {
