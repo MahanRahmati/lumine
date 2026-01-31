@@ -3,7 +3,7 @@ use regex::Regex;
 use crate::audio::devices::{AudioInputDevice, AudioInputDevices};
 use crate::audio::errors::{AudioError, AudioResult};
 use crate::audio::platform::AudioPlatform;
-use crate::process::ProcessExecutor;
+use crate::process::executor::ProcessExecutor;
 
 /// Linux implementation of AudioPlatform trait.
 pub(crate) struct LinuxPlatform {}
