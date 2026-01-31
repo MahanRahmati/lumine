@@ -4,6 +4,7 @@ mod cli;
 mod config;
 mod files;
 mod network;
+mod process;
 mod whisper;
 
 use clap::Parser;

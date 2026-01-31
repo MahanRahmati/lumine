@@ -2,6 +2,7 @@ use std::path::Path;
 
 use crate::audio::errors::{AudioError, AudioResult};
 use crate::files::operations;
+use crate::process::executor::ProcessExecutor;
 
 /// Handles audio format conversion for Whisper transcription.
 ///
@@ -62,8 +63,9 @@ async fn convert_with_ffmpeg(
   output_file: &str,
   verbose: bool,
 ) -> AudioResult<()> {
-  let output = tokio::process::Command::new("ffmpeg")
-    .args([
+  let output = ProcessExecutor::run(
+    "ffmpeg",
+    &[
       "-i",
       input_file,
       "-ar",
@@ -74,15 +76,14 @@ async fn convert_with_ffmpeg(
       "pcm_s16le",
       output_file,
       "-y",
-    ])
-    .output()
-    .await
-    .map_err(|_| AudioError::ConversionFailed)?;
+    ],
+  )
+  .await
+  .map_err(|_| AudioError::ConversionFailed)?;
 
   if !output.status.success() {
     if verbose {
-      let stderr = String::from_utf8_lossy(&output.stderr);
-      println!("FFmpeg conversion error: {}", stderr);
+      println!("FFmpeg conversion error: {}", output.stderr);
     }
     return Err(AudioError::ConversionFailed);
   }

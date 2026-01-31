@@ -3,6 +3,7 @@ use regex::Regex;
 use crate::audio::devices::{AudioInputDevice, AudioInputDevices};
 use crate::audio::errors::{AudioError, AudioResult};
 use crate::audio::platform::AudioPlatform;
+use crate::process::ProcessExecutor;
 
 /// Linux implementation of AudioPlatform trait.
 pub(crate) struct LinuxPlatform {}
@@ -23,19 +24,16 @@ impl AudioPlatform for LinuxPlatform {
     &self,
     verbose: bool,
   ) -> AudioResult<AudioInputDevices> {
-    let output = tokio::process::Command::new("ffmpeg")
-      .args(["-sources", "pulse"])
-      .output()
+    let output = ProcessExecutor::run("ffmpeg", &["-sources", "pulse"])
       .await
       .map_err(|_| AudioError::CouldNotExecuteFFMPEG)?;
 
-    let output_str = String::from_utf8_lossy(&output.stderr);
     let mut audio_section = false;
     let mut devices: AudioInputDevices = Vec::new();
 
     let regex = Regex::new(r"^\s*(?:\*\s)?([^\s]+)\s+\[([^\]]+)\]").unwrap();
 
-    for line in output_str.lines() {
+    for line in output.stderr.lines() {
       if line.contains("Auto-detected sources for pulse") {
         audio_section = true;
         continue;

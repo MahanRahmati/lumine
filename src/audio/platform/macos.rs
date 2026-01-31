@@ -3,6 +3,7 @@ use regex::Regex;
 use crate::audio::devices::{AudioInputDevice, AudioInputDevices};
 use crate::audio::errors::{AudioError, AudioResult};
 use crate::audio::platform::AudioPlatform;
+use crate::process::executor::ProcessExecutor;
 
 /// macOS implementation of AudioPlatform trait.
 ///
@@ -25,19 +26,19 @@ impl AudioPlatform for MacOSPlatform {
     &self,
     verbose: bool,
   ) -> AudioResult<AudioInputDevices> {
-    let output = tokio::process::Command::new("ffmpeg")
-      .args(["-f", "avfoundation", "-list_devices", "true", "-i", ""])
-      .output()
-      .await
-      .map_err(|_| AudioError::CouldNotExecuteFFMPEG)?;
+    let output = ProcessExecutor::run(
+      "ffmpeg",
+      &["-f", "avfoundation", "-list_devices", "true", "-i", ""],
+    )
+    .await
+    .map_err(|_| AudioError::CouldNotExecuteFFMPEG)?;
 
-    let output_str = String::from_utf8_lossy(&output.stderr);
     let mut audio_section = false;
     let mut devices: AudioInputDevices = Vec::new();
 
     let regex = Regex::new(r"\[(\d+)\]\s+(.*)").unwrap();
 
-    for line in output_str.lines() {
+    for line in output.stderr.lines() {
       if line.contains("AVFoundation audio devices") {
         audio_section = true;
         continue;

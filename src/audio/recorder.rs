@@ -1,10 +1,8 @@
 use std::os::unix::process::ExitStatusExt;
-use std::process::Stdio;
 use std::sync::Arc;
 use std::time::Duration;
 
 use tokio::io::{AsyncBufReadExt, BufReader};
-use tokio::process::Command;
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 
@@ -12,6 +10,7 @@ use crate::audio::devices::AudioInputDevice;
 use crate::audio::errors::{AudioError, AudioResult};
 use crate::audio::platform::AudioPlatform;
 use crate::files::operations;
+use crate::process::executor::ProcessExecutor;
 
 /// Generic audio recorder with platform-specific implementation.
 ///
@@ -88,14 +87,11 @@ impl<P: AudioPlatform> AudioRecorder<P> {
   }
 
   async fn check_ffmpeg(&self) -> AudioResult<bool> {
-    let output = tokio::process::Command::new("ffmpeg")
-      .args(["-version"])
-      .output()
+    let output = ProcessExecutor::run("ffmpeg", &["-version"])
       .await
       .map_err(|_| AudioError::FFMPEGNotFound)?;
 
-    let output_str = String::from_utf8_lossy(&output.stdout);
-    for line in output_str.lines() {
+    for line in output.stdout.lines() {
       if line.contains("ffmpeg version") {
         if self.verbose {
           println!("Found ffmpeg: {}", line);
@@ -128,11 +124,11 @@ impl<P: AudioPlatform> AudioRecorder<P> {
       output_file.clone(),
     );
 
-    let mut child = Command::new("ffmpeg")
-      .args(args)
-      .stderr(Stdio::piped())
-      .spawn()
-      .map_err(|_| AudioError::CouldNotExecuteFFMPEG)?;
+    let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+    let mut child =
+      ProcessExecutor::spawn_with_stderr_piped("ffmpeg", &args_refs)
+        .await
+        .map_err(|_| AudioError::CouldNotExecuteFFMPEG)?;
 
     if self.verbose {
       println!("Recording audio to: {}", output_file);
