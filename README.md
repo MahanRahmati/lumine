@@ -36,10 +36,12 @@ lumine reset-config
 
 ## Requirements
 
-### macOS
+### MacOS
+
 - FFmpeg (required for audio recording and format conversion)
 
 ### Linux
+
 - FFmpeg (required for audio recording and format conversion)
 - PulseAudio (required for audio capture)
 
@@ -65,20 +67,31 @@ The configuration file is loaded from XDG configuration directory.
 
 ```config.toml
 [whisper]
+# Use local Whisper model (true) or remote service (false)
 use_local = true
+# URL for remote Whisper service (used when use_local = false)
 url = "http://127.0.0.1:9090"
+# Path to local Whisper model file (used when use_local = true)
 model_path = ""
+# Path to VAD model for speech filtering (optional, used when use_local = true)
 vad_model_path = ""
 
 [recorder]
+# Directory for audio recordings (auto-created if empty)
 recordings_directory = ""
+# Seconds of silence before stopping recording
 silence_limit = 2
+# Noise threshold in dB for silence detection
 silence_detect_noise = 40
+# Preferred audio input device name
 preferred_audio_input_device = ""
+# Maximum recording duration in seconds (0 = unlimited)
 max_recording_duration = 60
 
 [general]
+# Remove audio files after successful transcription
 remove_after_transcript = true
+# Enable verbose output for debugging
 verbose = false
 ```
 
