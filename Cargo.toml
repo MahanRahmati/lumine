@@ -29,4 +29,3 @@ whisper-rs = { version = "0.15.1" }
 
 [lints.clippy]
 needless_return = "allow"
-upper_case_acronyms = "allow"
