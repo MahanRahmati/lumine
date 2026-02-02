@@ -25,7 +25,7 @@ pub struct Cli {
   pub command: Option<Commands>,
 
   /// Use verbose output
-  #[arg(short, long, default_value_t = false)]
+  #[arg(short, long, default_value_t = false, global = true)]
   pub verbose: bool,
 }
 
