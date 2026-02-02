@@ -29,34 +29,6 @@ pub enum WhisperError {
     "Failed to decode Whisper response. The service may be experiencing issues or the audio format may be unsupported."
   )]
   DecodeError,
-
-  #[error(
-    "Failed to load Whisper model. Please ensure the model file is valid and accessible."
-  )]
-  ModelNotFound,
-
-  #[error(
-    "Failed to create Whisper state. Please ensure the model is properly initialized."
-  )]
-  StateCreationFailed,
-
-  #[error(
-    "Failed to convert audio data. Please ensure the audio format is supported."
-  )]
-  AudioConversionFailed,
-
-  #[error("Audio format not supported. Expected 16kHz mono PCM.")]
-  UnsupportedAudioFormat,
-
-  #[error(
-    "Transcription failed. Please check the audio file and model compatibility."
-  )]
-  TranscriptionFailed,
-
-  #[error(
-    "VAD model not found. Please ensure the VAD model file is valid and accessible."
-  )]
-  VadModelNotFound,
 }
 
 /// Result type for Whisper operations.

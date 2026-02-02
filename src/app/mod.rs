@@ -60,13 +60,7 @@ impl App {
   }
 
   fn create_whisper_instance(&self, file_path: String) -> Whisper {
-    return Whisper::new(
-      self.config.get_use_local(),
-      self.config.get_whisper_url(),
-      self.config.get_whisper_model_path(),
-      self.config.get_vad_model_path(),
-      file_path,
-    );
+    return Whisper::new(self.config.get_whisper_url(), file_path);
   }
 
   async fn cleanup_file(&self, temp_file: &mut TemporaryFile) {

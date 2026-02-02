@@ -2,10 +2,7 @@ use crate::config::*;
 
 const VALID_CONFIG: &str = r#"
 [whisper]
-use_local = true
 url = "http://localhost:8080"
-model_path = ""
-vad_model_path = ""
 
 [recorder]
 recordings_directory = "test_recordings"
@@ -19,10 +16,7 @@ remove_after_transcript = true
 
 const INVALID_CONFIG: &str = r#"
 [whisper]
-use_local = true
 url = "http://localhost:8080"
-model_path = ""
-vad_model_path = ""
 
 [recorder]
 recordings_directory = "test_recordings"
@@ -36,7 +30,6 @@ remove_after_transcript = not_a_boolean
 #[test]
 fn test_config_default() {
   let config = Config::default();
-  assert!(config.get_use_local());
   assert_eq!(config.get_whisper_url(), "http://127.0.0.1:9090");
   let recordings_dir = config.get_recordings_directory();
   assert!(recordings_dir.contains("recordings"));
@@ -58,7 +51,6 @@ async fn test_load_from_path() {
   let result = Config::load_from_path(config_path).await;
   assert!(result.is_ok());
   let config = result.unwrap();
-  assert!(config.get_use_local());
   assert_eq!(config.get_whisper_url(), "http://localhost:8080");
 
   tokio::fs::remove_file(temp_dir.join("test_config.toml"))
@@ -83,7 +75,6 @@ fn test_parse_config_content() {
   assert!(result.is_ok());
 
   let config = result.unwrap();
-  assert!(config.get_use_local());
   assert_eq!(config.get_whisper_url(), "http://localhost:8080");
   assert_eq!(config.get_recordings_directory(), "test_recordings");
   assert_eq!(config.get_silence_limit(), 5);
@@ -117,7 +108,6 @@ async fn test_config_reset_to_defaults() {
     .expect("Should load config from temp path");
 
   // Verify defaults were saved correctly
-  assert!(config.get_use_local());
   assert_eq!(config.get_whisper_url(), "http://127.0.0.1:9090");
   assert_eq!(config.get_silence_limit(), 2);
   assert_eq!(config.get_silence_detect_noise(), 40);

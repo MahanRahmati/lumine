@@ -30,7 +30,6 @@ use crate::files::operations;
 
 const DEFAULT_DIRECTORY: &str = "lumine";
 const DEFAULT_CONFIG_NAME: &str = "config.toml";
-const DEFAULT_USE_LOCAL: bool = true;
 const DEFAULT_WHISPER_URL: &str = "http://127.0.0.1:9090";
 const DEFAULT_SILENCE_LIMIT_SECONDS: i32 = 2;
 const DEFAULT_SILENCE_DETECT_NOISE_DB: i32 = 40;
@@ -51,13 +50,10 @@ pub struct Config {
 
 /// Configuration for the Whisper transcription service.
 ///
-/// Contains settings for the Whisper API endpoint and model paths.
+/// Contains settings for the Whisper API endpoint.
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct WhisperConfig {
-  pub use_local: Option<bool>,
   pub url: Option<String>,
-  pub model_path: Option<String>,
-  pub vad_model_path: Option<String>,
 }
 
 /// Configuration for audio recording functionality.
@@ -101,18 +97,6 @@ impl Config {
     return Config::load_from_path(config_path).await;
   }
 
-  /// Gets whether to use local Whisper transcription.
-  ///
-  /// Returns the configured setting or true. When enabled, the application
-  /// will use the local Whisper model for transcription.
-  ///
-  /// # Returns
-  ///
-  /// A `bool` indicating whether to use local transcription mode.
-  pub fn get_use_local(&self) -> bool {
-    return self.whisper.use_local.unwrap_or(DEFAULT_USE_LOCAL);
-  }
-
   /// Gets the Whisper service URL.
   ///
   /// Returns the configured URL or the default localhost URL if not set.
@@ -126,28 +110,6 @@ impl Config {
       .url
       .clone()
       .unwrap_or(String::from(DEFAULT_WHISPER_URL));
-  }
-
-  /// Gets the Whisper model file path.
-  ///
-  /// Returns the configured model path or an empty string if not set.
-  ///
-  /// # Returns
-  ///
-  /// A `String` containing the path to the Whisper model file.
-  pub fn get_whisper_model_path(&self) -> String {
-    return self.whisper.model_path.clone().unwrap_or_default();
-  }
-
-  /// Gets the Voice Activity Detection (VAD) model file path.
-  ///
-  /// Returns the configured VAD model path or an empty string if not set.
-  ///
-  /// # Returns
-  ///
-  /// A `String` containing the path to the VAD model file.
-  pub fn get_vad_model_path(&self) -> String {
-    return self.whisper.vad_model_path.clone().unwrap_or_default();
   }
 
   /// Gets the recordings directory path.
@@ -344,10 +306,7 @@ impl Default for Config {
   fn default() -> Self {
     return Config {
       whisper: WhisperConfig {
-        use_local: Some(DEFAULT_USE_LOCAL),
         url: Some(String::from(DEFAULT_WHISPER_URL)),
-        model_path: Some(String::new()),
-        vad_model_path: Some(String::new()),
       },
       recorder: RecorderConfig {
         recordings_directory: Some(String::new()),

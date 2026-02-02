@@ -67,14 +67,8 @@ The configuration file is loaded from XDG configuration directory.
 
 ```config.toml
 [whisper]
-# Use local Whisper model (true) or remote service (false)
-use_local = true
-# URL for remote Whisper service (used when use_local = false)
+# URL for Whisper API service
 url = "http://127.0.0.1:9090"
-# Path to local Whisper model file (used when use_local = true)
-model_path = ""
-# Path to VAD model for speech filtering (optional, used when use_local = true)
-vad_model_path = ""
 
 [recorder]
 # Directory for audio recordings (auto-created if empty)
