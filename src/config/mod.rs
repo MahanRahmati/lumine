@@ -37,7 +37,6 @@ const DEFAULT_SILENCE_DETECT_NOISE_DB: i32 = 40;
 const DEFAULT_RECORDINGS_DIRECTORY: &str = "recordings";
 const DEFAULT_MAX_RECORDING_DURATION_SECONDS: i32 = 60;
 const DEFAULT_REMOVE_AFTER_TRANSCRIPT: bool = true;
-const DEFAULT_VERBOSE: bool = false;
 
 /// Main configuration structure for the Lumine application.
 ///
@@ -79,7 +78,6 @@ pub struct RecorderConfig {
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct GeneralConfig {
   pub remove_after_transcript: Option<bool>,
-  pub verbose: Option<bool>,
 }
 
 impl Config {
@@ -253,18 +251,6 @@ impl Config {
       .unwrap_or(DEFAULT_REMOVE_AFTER_TRANSCRIPT);
   }
 
-  /// Gets whether verbose output is enabled.
-  ///
-  /// Returns the configured verbose setting or false if not set.
-  /// When enabled, provides detailed output for debugging and monitoring.
-  ///
-  /// # Returns
-  ///
-  /// A `bool` indicating whether verbose mode is enabled.
-  pub fn get_verbose(&self) -> bool {
-    return self.general.verbose.unwrap_or(false);
-  }
-
   /// Resets the configuration to default values and saves it.
   ///
   /// Creates a new default configuration and saves it to the XDG config directory,
@@ -372,7 +358,6 @@ impl Default for Config {
       },
       general: GeneralConfig {
         remove_after_transcript: Some(DEFAULT_REMOVE_AFTER_TRANSCRIPT),
-        verbose: Some(DEFAULT_VERBOSE),
       },
     };
   }

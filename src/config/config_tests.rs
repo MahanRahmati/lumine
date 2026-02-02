@@ -15,7 +15,6 @@ preferred_audio_input_device = "test_device"
 
 [general]
 remove_after_transcript = true
-verbose = false
 "#;
 
 const INVALID_CONFIG: &str = r#"
@@ -32,7 +31,6 @@ silence_limit =
 
 [general]
 remove_after_transcript = not_a_boolean
-verbose = false
 "#;
 
 #[test]
@@ -49,7 +47,6 @@ fn test_config_default() {
   assert_eq!(config.get_silence_detect_noise(), 40);
   assert_eq!(config.get_preferred_audio_input_device(), "");
   assert!(config.get_remove_after_transcript());
-  assert!(!config.get_verbose());
 }
 
 #[tokio::test]
@@ -93,7 +90,6 @@ fn test_parse_config_content() {
   assert_eq!(config.get_silence_detect_noise(), 30);
   assert_eq!(config.get_preferred_audio_input_device(), "test_device");
   assert!(config.get_remove_after_transcript());
-  assert!(!config.get_verbose());
 }
 
 #[test]
@@ -127,7 +123,6 @@ async fn test_config_reset_to_defaults() {
   assert_eq!(config.get_silence_detect_noise(), 40);
   assert_eq!(config.get_preferred_audio_input_device(), "");
   assert!(config.get_remove_after_transcript());
-  assert!(!config.get_verbose());
 
   // Cleanup
   let _ = tokio::fs::remove_file(&config_path).await;

@@ -32,6 +32,7 @@ use crate::whisper::Whisper;
 /// using the provided configuration settings.
 pub struct App {
   config: Config,
+  verbose: bool,
 }
 
 impl App {
@@ -40,12 +41,13 @@ impl App {
   /// # Arguments
   ///
   /// * `config` - Configuration containing all application settings
+  /// * `verbose` - Whether to enable verbose output
   ///
   /// # Returns
   ///
   /// A new `App` instance.
-  pub fn new(config: Config) -> Self {
-    return App { config };
+  pub fn new(config: Config, verbose: bool) -> Self {
+    return App { config, verbose };
   }
 
   fn create_audio(&self) -> Audio {
@@ -54,7 +56,7 @@ impl App {
       self.config.get_silence_limit(),
       self.config.get_silence_detect_noise(),
       self.config.get_preferred_audio_input_device(),
-      self.config.get_verbose(),
+      self.verbose,
       self.config.get_max_recording_duration(),
     );
   }
@@ -66,14 +68,14 @@ impl App {
       self.config.get_whisper_model_path(),
       self.config.get_vad_model_path(),
       file_path,
-      self.config.get_verbose(),
+      self.verbose,
     );
   }
 
   async fn cleanup_file(&self, temp_file: &mut TemporaryFile) {
     if self.config.get_remove_after_transcript() {
       let result = temp_file.cleanup().await;
-      if result.is_ok() && self.config.get_verbose() {
+      if result.is_ok() && self.verbose {
         println!("File removed: {}", temp_file.path());
       }
     } else {
@@ -146,7 +148,7 @@ impl App {
 
     let mut temp_converted_file = TemporaryFile::new(converted_file_path);
 
-    if self.config.get_verbose() {
+    if self.verbose {
       println!("File saved in: {}", self.config.get_recordings_directory());
       println!("Format: 16kHz mono WAV (Whisper-ready)");
     }

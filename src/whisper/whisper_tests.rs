@@ -19,7 +19,7 @@ async fn test_send_audio() {
     config.get_whisper_model_path(),
     config.get_vad_model_path(),
     sample_file_path.to_string(),
-    config.get_verbose(),
+    false,
   );
 
   let result = whisper.transcribe().await;
@@ -45,7 +45,7 @@ async fn test_send_audio_file_not_found() {
     config.get_whisper_model_path(),
     config.get_vad_model_path(),
     "nonexistent_file.wav".to_string(),
-    config.get_verbose(),
+    false,
   );
 
   let result = whisper.transcribe().await;
@@ -72,7 +72,7 @@ async fn test_send_audio_with_sample_file_invalid_url() {
     config.get_whisper_model_path(),
     config.get_vad_model_path(),
     sample_file_path.to_string(),
-    config.get_verbose(),
+    false,
   );
 
   let result = whisper.transcribe().await;

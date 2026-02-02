@@ -91,8 +91,6 @@ max_recording_duration = 60
 [general]
 # Remove audio files after successful transcription
 remove_after_transcript = true
-# Enable verbose output for debugging
-verbose = false
 ```
 
 ## License

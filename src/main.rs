@@ -25,7 +25,7 @@ async fn main() {
     }
   };
 
-  let app = App::new(config);
+  let app = App::new(config, cli.verbose);
 
   let result = match cli.command {
     Some(Commands::Transcribe { file }) => app.transcribe_file(&file).await,
