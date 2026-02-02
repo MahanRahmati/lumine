@@ -24,6 +24,7 @@ use crate::audio::Audio;
 use crate::config::Config;
 use crate::files::operations::validate_file_exists;
 use crate::files::temporary::TemporaryFile;
+use crate::vlog;
 use crate::whisper::Whisper;
 
 /// Main application orchestrator for Lumine.
@@ -32,7 +33,6 @@ use crate::whisper::Whisper;
 /// using the provided configuration settings.
 pub struct App {
   config: Config,
-  verbose: bool,
 }
 
 impl App {
@@ -41,13 +41,12 @@ impl App {
   /// # Arguments
   ///
   /// * `config` - Configuration containing all application settings
-  /// * `verbose` - Whether to enable verbose output
   ///
   /// # Returns
   ///
   /// A new `App` instance.
-  pub fn new(config: Config, verbose: bool) -> Self {
-    return App { config, verbose };
+  pub fn new(config: Config) -> Self {
+    return App { config };
   }
 
   fn create_audio(&self) -> Audio {
@@ -56,7 +55,6 @@ impl App {
       self.config.get_silence_limit(),
       self.config.get_silence_detect_noise(),
       self.config.get_preferred_audio_input_device(),
-      self.verbose,
       self.config.get_max_recording_duration(),
     );
   }
@@ -68,15 +66,14 @@ impl App {
       self.config.get_whisper_model_path(),
       self.config.get_vad_model_path(),
       file_path,
-      self.verbose,
     );
   }
 
   async fn cleanup_file(&self, temp_file: &mut TemporaryFile) {
     if self.config.get_remove_after_transcript() {
       let result = temp_file.cleanup().await;
-      if result.is_ok() && self.verbose {
-        println!("File removed: {}", temp_file.path());
+      if result.is_ok() {
+        vlog!("File removed: {}", temp_file.path());
       }
     } else {
       temp_file.keep();
@@ -148,10 +145,8 @@ impl App {
 
     let mut temp_converted_file = TemporaryFile::new(converted_file_path);
 
-    if self.verbose {
-      println!("File saved in: {}", self.config.get_recordings_directory());
-      println!("Format: 16kHz mono WAV (Whisper-ready)");
-    }
+    vlog!("File saved in: {}", self.config.get_recordings_directory());
+    vlog!("Format: 16kHz mono WAV (Whisper-ready)");
 
     let result = Ok(format!(
       "Audio recorded and converted successfully: {}",

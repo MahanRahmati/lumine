@@ -3,6 +3,7 @@ use std::path::Path;
 use crate::audio::errors::{AudioError, AudioResult};
 use crate::files::operations;
 use crate::process::executor::ProcessExecutor;
+use crate::vlog;
 
 /// Handles audio format conversion for Whisper transcription.
 ///
@@ -18,7 +19,6 @@ impl AudioConverter {
   /// # Arguments
   ///
   /// * `input_file` - Path to the input audio file
-  /// * `verbose` - Whether to show detailed output during conversion
   ///
   /// # Returns
   ///
@@ -26,7 +26,6 @@ impl AudioConverter {
   /// or an error if conversion failed.
   pub async fn convert_audio_for_whisper(
     input_file: &str,
-    verbose: bool,
   ) -> AudioResult<String> {
     operations::validate_file_exists(input_file)
       .await
@@ -41,18 +40,15 @@ impl AudioConverter {
     let output_file = parent_dir.join(format!("{}_whisper.wav", stem));
     let output_file_str = output_file.to_string_lossy();
 
-    if verbose {
-      println!(
-        "Converting audio to Whisper format: {} → {}",
-        input_file, output_file_str
-      );
-    }
+    vlog!(
+      "Converting audio to Whisper format: {} → {}",
+      input_file,
+      output_file_str
+    );
 
-    convert_with_ffmpeg(input_file, &output_file_str, verbose).await?;
+    convert_with_ffmpeg(input_file, &output_file_str).await?;
 
-    if verbose {
-      println!("Audio conversion completed: {}", output_file_str);
-    }
+    vlog!("Audio conversion completed: {}", output_file_str);
 
     return Ok(output_file_str.to_string());
   }
@@ -61,7 +57,6 @@ impl AudioConverter {
 async fn convert_with_ffmpeg(
   input_file: &str,
   output_file: &str,
-  verbose: bool,
 ) -> AudioResult<()> {
   let output = ProcessExecutor::run(
     "ffmpeg",
@@ -82,9 +77,7 @@ async fn convert_with_ffmpeg(
   .map_err(|_| AudioError::ConversionFailed)?;
 
   if !output.status.success() {
-    if verbose {
-      println!("FFmpeg conversion error: {}", output.stderr);
-    }
+    vlog!("FFmpeg conversion error: {}", output.stderr);
     return Err(AudioError::ConversionFailed);
   }
 

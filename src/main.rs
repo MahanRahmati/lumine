@@ -3,6 +3,7 @@ mod audio;
 mod cli;
 mod config;
 mod files;
+mod logging;
 mod network;
 mod process;
 mod whisper;
@@ -12,10 +13,13 @@ use clap::Parser;
 use crate::app::App;
 use crate::cli::{Cli, Commands};
 use crate::config::Config;
+use crate::logging::set_verbose;
 
 #[tokio::main]
 async fn main() {
   let cli = Cli::parse();
+
+  set_verbose(cli.verbose);
 
   let config = match Config::load().await {
     Ok(config) => config,
@@ -25,7 +29,7 @@ async fn main() {
     }
   };
 
-  let app = App::new(config, cli.verbose);
+  let app = App::new(config);
 
   let result = match cli.command {
     Some(Commands::Transcribe { file }) => app.transcribe_file(&file).await,

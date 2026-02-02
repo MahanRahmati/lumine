@@ -38,6 +38,7 @@ use whisper_rs::{
 
 use crate::files::operations;
 use crate::network::{HttpClient, errors::NetworkError};
+use crate::vlog;
 use crate::whisper::errors::{WhisperError, WhisperResult};
 
 /// Response from the Whisper transcription service.
@@ -58,7 +59,6 @@ pub struct Whisper {
   model_path: String,
   vad_model_path: String,
   file_path: String,
-  verbose: bool,
 }
 
 impl Whisper {
@@ -71,7 +71,6 @@ impl Whisper {
   /// * `model_path` - Path to local Whisper model (empty for remote mode)
   /// * `vad_model_path` - Path to VAD model for speech filtering (optional)
   /// * `file_path` - Path to the audio file to transcribe
-  /// * `verbose` - Whether to enable verbose output
   ///
   /// # Returns
   ///
@@ -82,7 +81,6 @@ impl Whisper {
     model_path: String,
     vad_model_path: String,
     file_path: String,
-    verbose: bool,
   ) -> Self {
     return Whisper {
       use_local,
@@ -90,7 +88,6 @@ impl Whisper {
       model_path,
       vad_model_path,
       file_path,
-      verbose,
     };
   }
 
@@ -103,9 +100,7 @@ impl Whisper {
   ///
   /// A `WhisperResult<String>` containing the transcribed text or an error.
   pub async fn transcribe(&self) -> WhisperResult<String> {
-    if self.verbose {
-      println!("Sending audio file to Whisper transcription service...");
-    }
+    vlog!("Sending audio file to Whisper transcription service...");
 
     let response = if self.use_local {
       self.transcribe_local().await?
@@ -113,24 +108,18 @@ impl Whisper {
       self.transcribe_remote().await?
     };
 
-    if self.verbose {
-      println!("Transcription completed successfully.");
-    }
+    vlog!("Transcription completed successfully.");
     return Ok(response.text);
   }
 
   async fn transcribe_remote(&self) -> WhisperResult<WhisperResponse> {
-    if self.verbose {
-      println!("Validating file path...");
-    }
+    vlog!("Validating file path...");
 
     operations::validate_file_exists(&self.file_path)
       .await
       .map_err(|_| WhisperError::FileNotFound(self.file_path.clone()))?;
 
-    if self.verbose {
-      println!("Preparing multipart form for audio file upload...");
-    }
+    vlog!("Preparing multipart form for audio file upload...");
 
     let file_bytes = tokio::fs::read(&self.file_path)
       .await
@@ -148,7 +137,7 @@ impl Whisper {
       .text("response_format", "json")
       .part("file", file_part);
 
-    let client = HttpClient::new(self.url.clone(), self.verbose);
+    let client = HttpClient::new(self.url.clone());
 
     match client
       .post_with_form::<WhisperResponse>(form, "inference")
@@ -170,17 +159,13 @@ impl Whisper {
   async fn transcribe_local(&self) -> WhisperResult<WhisperResponse> {
     install_logging_hooks();
 
-    if self.verbose {
-      println!("Validating file path...");
-    }
+    vlog!("Validating file path...");
 
     operations::validate_file_exists(&self.file_path)
       .await
       .map_err(|_| WhisperError::FileNotFound(self.file_path.clone()))?;
 
-    if self.verbose {
-      println!("Loading Whisper model...");
-    }
+    vlog!("Loading Whisper model...");
 
     let ctx = WhisperContext::new_with_params(
       &self.model_path,
@@ -192,9 +177,7 @@ impl Whisper {
       .create_state()
       .map_err(|_| WhisperError::StateCreationFailed)?;
 
-    if self.verbose {
-      println!("Reading audio file...");
-    }
+    vlog!("Reading audio file...");
 
     let reader = WavReader::open(&self.file_path)
       .map_err(|_| WhisperError::FileNotFound(self.file_path.clone()))?;
@@ -226,9 +209,7 @@ impl Whisper {
 
     let audio = self.apply_vad_preprocessing(audio, spec.sample_rate)?;
 
-    if self.verbose {
-      println!("Running transcription...");
-    }
+    vlog!("Running transcription...");
 
     let mut params = FullParams::new(SamplingStrategy::Greedy { best_of: 0 });
     params.set_n_threads(1);
@@ -261,9 +242,7 @@ impl Whisper {
       return Ok(audio);
     }
 
-    if self.verbose {
-      println!("Running VAD preprocessing to filter speech segments...");
-    }
+    vlog!("Running VAD preprocessing to filter speech segments...");
 
     let mut vad_ctx_params = WhisperVadContextParams::default();
     vad_ctx_params.set_n_threads(1);
@@ -278,9 +257,7 @@ impl Whisper {
       .segments_from_samples(vad_params, &audio)
       .map_err(|_| WhisperError::TranscriptionFailed)?;
 
-    if self.verbose {
-      println!("VAD detected speech segments");
-    }
+    vlog!("VAD detected speech segments");
 
     let mut speech_audio = Vec::new();
     for segment in segments {
@@ -296,12 +273,10 @@ impl Whisper {
       }
     }
 
-    if self.verbose {
-      println!(
-        "VAD extracted {} samples of speech audio",
-        speech_audio.len()
-      );
-    }
+    vlog!(
+      "VAD extracted {} samples of speech audio",
+      speech_audio.len()
+    );
 
     return Ok(speech_audio);
   }

@@ -4,6 +4,7 @@ use crate::audio::devices::{AudioInputDevice, AudioInputDevices};
 use crate::audio::errors::{AudioError, AudioResult};
 use crate::audio::platform::AudioPlatform;
 use crate::process::executor::ProcessExecutor;
+use crate::vlog;
 
 /// macOS implementation of AudioPlatform trait.
 ///
@@ -22,10 +23,7 @@ impl MacOSPlatform {
 }
 
 impl AudioPlatform for MacOSPlatform {
-  async fn get_audio_input_devices(
-    &self,
-    verbose: bool,
-  ) -> AudioResult<AudioInputDevices> {
+  async fn get_audio_input_devices(&self) -> AudioResult<AudioInputDevices> {
     let output = ProcessExecutor::run(
       "ffmpeg",
       &["-f", "avfoundation", "-list_devices", "true", "-i", ""],
@@ -57,11 +55,9 @@ impl AudioPlatform for MacOSPlatform {
       }
     }
 
-    if verbose {
-      println!("Audio Devices Found:");
-      for device in &devices {
-        println!("- {}", device.get_name());
-      }
+    vlog!("Audio Devices Found:");
+    for device in &devices {
+      vlog!("- {}", device.get_name());
     }
 
     return Ok(devices);
@@ -71,34 +67,25 @@ impl AudioPlatform for MacOSPlatform {
     &self,
     devices: AudioInputDevices,
     preferred_audio_input_device: String,
-    verbose: bool,
   ) -> AudioInputDevice {
     let default_device = AudioInputDevice::default();
 
     if preferred_audio_input_device.is_empty() {
-      if verbose {
-        println!(
-          "No preferred audio input device specified, using default device"
-        );
-      }
+      vlog!("No preferred audio input device specified, using default device");
       return default_device;
     }
 
     for device in devices {
       if device.get_name().contains(&preferred_audio_input_device) {
-        if verbose {
-          println!(
-            "Selected preferred audio input device: {}",
-            device.get_name()
-          );
-        }
+        vlog!(
+          "Selected preferred audio input device: {}",
+          device.get_name()
+        );
         return device;
       }
     }
 
-    if verbose {
-      println!("No preferred audio input device found, using default device");
-    }
+    vlog!("No preferred audio input device found, using default device");
 
     return default_device;
   }

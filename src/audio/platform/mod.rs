@@ -10,17 +10,10 @@ mod linux;
 pub trait AudioPlatform {
   /// Get list of available audio input devices
   ///
-  /// # Arguments
-  ///
-  /// * `verbose` - Whether to print verbose output during device detection
-  ///
   /// # Returns
   ///
   /// List of available audio input devices or error
-  async fn get_audio_input_devices(
-    &self,
-    verbose: bool,
-  ) -> AudioResult<AudioInputDevices>;
+  async fn get_audio_input_devices(&self) -> AudioResult<AudioInputDevices>;
 
   /// Select an audio input device based on the provided list of devices
   ///
@@ -28,7 +21,6 @@ pub trait AudioPlatform {
   ///
   /// * `devices` - List of available audio input devices
   /// * `preferred_audio_input_device` - Preferred device name
-  /// * `verbose` - Whether to print verbose output during device selection
   ///
   /// # Returns
   ///
@@ -37,7 +29,6 @@ pub trait AudioPlatform {
     &self,
     devices: AudioInputDevices,
     preferred_audio_input_device: String,
-    verbose: bool,
   ) -> AudioInputDevice;
 
   /// Build arguments for recording audio with ffmpeg

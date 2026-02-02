@@ -39,7 +39,6 @@ pub struct Audio {
   silence_limit: i32,
   silence_detect_noise: i32,
   preferred_audio_input_device: String,
-  verbose: bool,
   max_recording_duration: i32,
 }
 
@@ -52,7 +51,6 @@ impl Audio {
   /// * `silence_limit` - Seconds of silence before stopping recording
   /// * `silence_detect_noise` - Noise threshold in decibels for silence detection
   /// * `preferred_audio_input_device` - Name of preferred audio input device
-  /// * `verbose` - Whether to show detailed output during operations
   /// * `max_recording_duration` - Maximum recording duration in seconds (0 for unlimited)
   ///
   /// # Returns
@@ -63,7 +61,6 @@ impl Audio {
     silence_limit: i32,
     silence_detect_noise: i32,
     preferred_audio_input_device: String,
-    verbose: bool,
     max_recording_duration: i32,
   ) -> Self {
     return Audio {
@@ -71,7 +68,6 @@ impl Audio {
       silence_limit,
       silence_detect_noise,
       preferred_audio_input_device,
-      verbose,
       max_recording_duration,
     };
   }
@@ -91,7 +87,6 @@ impl Audio {
       self.silence_limit,
       self.silence_detect_noise,
       self.preferred_audio_input_device.clone(),
-      self.verbose,
       self.max_recording_duration,
       get_platform(),
     );
@@ -112,7 +107,6 @@ impl Audio {
   /// An `AudioResult<String>` containing the path to the converted audio file
   /// or an error if conversion failed.
   pub async fn convert_audio(&self, input_file: &str) -> AudioResult<String> {
-    return AudioConverter::convert_audio_for_whisper(input_file, self.verbose)
-      .await;
+    return AudioConverter::convert_audio_for_whisper(input_file).await;
   }
 }

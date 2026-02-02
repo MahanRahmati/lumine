@@ -15,7 +15,6 @@
 //! - POST requests with multipart form data
 //! - JSON response deserialization
 //! - URL validation before requests
-//! - Verbose logging support for debugging
 
 pub mod errors;
 
@@ -25,30 +24,28 @@ mod network_tests;
 use reqwest::multipart;
 
 use crate::network::errors::{NetworkError, NetworkResult};
+use crate::vlog;
 
 /// HTTP client for network requests to external services.
 ///
-/// Provides generic POST functionality with multipart form support
-/// and verbose logging capabilities for debugging.
+/// Provides generic POST functionality with multipart form support.
 #[derive(Debug, Clone)]
 pub struct HttpClient {
   base_url: String,
-  verbose: bool,
 }
 
 impl HttpClient {
-  /// Creates a new HttpClient with base URL and verbose settings.
+  /// Creates a new HttpClient with base URL.
   ///
   /// # Arguments
   ///
   /// * `base_url` - Base URL for all HTTP requests
-  /// * `verbose` - Whether to show detailed request/response information
   ///
   /// # Returns
   ///
   /// A new `HttpClient` instance.
-  pub fn new(base_url: String, verbose: bool) -> Self {
-    return HttpClient { base_url, verbose };
+  pub fn new(base_url: String) -> Self {
+    return HttpClient { base_url };
   }
 
   /// Sends a POST request with multipart form data to the given endpoint.
@@ -81,9 +78,7 @@ impl HttpClient {
     let client = reqwest::Client::new();
     let full_url = format!("{}/{}", self.base_url, endpoint);
 
-    if self.verbose {
-      println!("Sending POST request to: {}", full_url);
-    }
+    vlog!("Sending POST request to: {}", full_url);
 
     let response = client
       .post(&full_url)
@@ -92,12 +87,10 @@ impl HttpClient {
       .await
       .map_err(|_| NetworkError::RequestFailed)?;
 
-    if self.verbose {
-      println!(
-        "Received response from service. Status: {}",
-        response.status()
-      );
-    }
+    vlog!(
+      "Received response from service. Status: {}",
+      response.status()
+    );
 
     if response.status() != reqwest::StatusCode::OK {
       return Err(NetworkError::ResponseError);
@@ -112,23 +105,17 @@ impl HttpClient {
   }
 
   async fn check_url(&self) -> NetworkResult<()> {
-    if self.verbose {
-      println!("Checking if service URL is reachable...");
-    }
+    vlog!("Checking if service URL is reachable...");
 
     let _url = reqwest::Url::parse(&self.base_url).map_err(|e| {
-      if self.verbose {
-        println!("Invalid URL format: {}", e);
-      }
+      vlog!("Invalid URL format: {}", e);
       NetworkError::InvalidURL(self.base_url.clone())
     })?;
 
     let client = reqwest::Client::new();
 
     let response = client.get(&self.base_url).send().await.map_err(|e| {
-      if self.verbose {
-        println!("Failed to connect to URL: {}", e);
-      }
+      vlog!("Failed to connect to URL: {}", e);
       NetworkError::RequestFailed
     })?;
 
@@ -136,15 +123,11 @@ impl HttpClient {
     if status != reqwest::StatusCode::OK
       && status != reqwest::StatusCode::NOT_FOUND
     {
-      if self.verbose {
-        println!("URL returned unexpected status: {}", status);
-      }
+      vlog!("URL returned unexpected status: {}", status);
       return Err(NetworkError::InvalidURL(self.base_url.clone()));
     }
 
-    if self.verbose {
-      println!("Service URL is reachable with status: {}", status);
-    }
+    vlog!("Service URL is reachable with status: {}", status);
 
     return Ok(());
   }
