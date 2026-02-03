@@ -70,10 +70,8 @@ impl App {
 
   async fn cleanup_file(&self, temp_file: &mut TemporaryFile) {
     if self.config.get_remove_after_transcript() {
-      let result = temp_file.cleanup().await;
-      if result.is_ok() {
-        vlog!("File removed: {}", temp_file.path());
-      }
+      let _ = temp_file.cleanup().await;
+      vlog!("File removed: {}", temp_file.path());
     } else {
       temp_file.keep();
     }

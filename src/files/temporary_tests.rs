@@ -43,7 +43,7 @@ async fn test_temporary_file_manual_cleanup() {
   fs::write(file_path, "test content").await.unwrap();
   assert!(operations::file_exists(file_path).await);
 
-  let temp_file = TemporaryFile::new(file_path.to_string());
+  let mut temp_file = TemporaryFile::new(file_path.to_string());
   assert!(operations::file_exists(file_path).await);
 
   temp_file.cleanup().await.unwrap();

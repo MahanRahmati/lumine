@@ -47,9 +47,11 @@ impl TemporaryFile {
   /// Manually cleans up the temporary file.
   ///
   /// Can be called before drop to perform explicit cleanup.
-  /// Returns success or error without affecting the automatic cleanup flag.
-  pub async fn cleanup(&self) -> FileResult<()> {
-    return operations::remove_file(&self.path).await;
+  /// On success, prevents the automatic cleanup from running again.
+  pub async fn cleanup(&mut self) -> FileResult<()> {
+    operations::remove_file(&self.path).await?;
+    self.should_cleanup = false;
+    return Ok(());
   }
 }
 
