@@ -20,7 +20,7 @@ fn test_cli_transcribe_command_with_file() {
   assert!(cli.is_ok());
   let parsed = cli.unwrap();
   match parsed.command {
-    Some(Commands::Transcribe { file }) => {
+    Some(Commands::Transcribe { file, .. }) => {
       assert_eq!(file, "test_audio.wav");
     }
     _ => panic!("Expected Transcribe command"),
@@ -35,7 +35,7 @@ fn test_cli_transcribe_command_with_short_file_flag() {
   assert!(cli.is_ok());
   let parsed = cli.unwrap();
   match parsed.command {
-    Some(Commands::Transcribe { file }) => {
+    Some(Commands::Transcribe { file, .. }) => {
       assert_eq!(file, "test_audio.mp3");
     }
     _ => panic!("Expected Transcribe command"),
@@ -95,7 +95,7 @@ fn test_cli_transcribe_with_file_containing_spaces() {
   assert!(cli.is_ok());
   let parsed = cli.unwrap();
   match parsed.command {
-    Some(Commands::Transcribe { file }) => {
+    Some(Commands::Transcribe { file, .. }) => {
       assert_eq!(file, "audio with spaces.wav");
     }
     _ => panic!("Expected Transcribe command"),
@@ -110,7 +110,7 @@ fn test_cli_transcribe_with_empty_file_string() {
   assert!(cli.is_ok());
   let parsed = cli.unwrap();
   match parsed.command {
-    Some(Commands::Transcribe { file }) => {
+    Some(Commands::Transcribe { file, .. }) => {
       assert_eq!(file, "");
     }
     _ => panic!("Expected Transcribe command"),

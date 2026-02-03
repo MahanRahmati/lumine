@@ -27,6 +27,24 @@ pub struct Cli {
   /// Use verbose output
   #[arg(short, long, default_value_t = false, global = true)]
   pub verbose: bool,
+
+  /// Output result in JSON format
+  #[arg(
+    short = 'j',
+    long,
+    default_value_t = false,
+    conflicts_with = "output_json_full"
+  )]
+  pub output_json: bool,
+
+  /// Output result in full JSON format with additional information
+  #[arg(
+    short = 'J',
+    long,
+    default_value_t = false,
+    conflicts_with = "output_json"
+  )]
+  pub output_json_full: bool,
 }
 
 #[derive(Subcommand)]
@@ -36,6 +54,24 @@ pub enum Commands {
     /// Path to the audio file to transcribe
     #[arg(short, long)]
     file: String,
+
+    /// Output result in JSON format
+    #[arg(
+      short = 'j',
+      long,
+      default_value_t = false,
+      conflicts_with = "output_json_full"
+    )]
+    output_json: bool,
+
+    /// Output result in full JSON format with additional information
+    #[arg(
+      short = 'J',
+      long,
+      default_value_t = false,
+      conflicts_with = "output_json"
+    )]
+    output_json_full: bool,
   },
 
   /// Record audio and save it to a file

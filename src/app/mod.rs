@@ -24,6 +24,7 @@ use crate::audio::Audio;
 use crate::config::Config;
 use crate::files::operations::validate_file_exists;
 use crate::files::temporary::TemporaryFile;
+use crate::output::format::OutputFormat;
 use crate::vlog;
 use crate::whisper::Whisper;
 
@@ -59,8 +60,12 @@ impl App {
     );
   }
 
-  fn create_whisper_instance(&self, file_path: String) -> Whisper {
-    return Whisper::new(self.config.get_whisper_url(), file_path);
+  fn create_whisper_instance(
+    &self,
+    file_path: String,
+    format: OutputFormat,
+  ) -> Whisper {
+    return Whisper::new(self.config.get_whisper_url(), file_path, format);
   }
 
   async fn cleanup_file(&self, temp_file: &mut TemporaryFile) {
@@ -82,13 +87,15 @@ impl App {
   /// # Arguments
   ///
   /// * `file_path` - Path to the audio file to transcribe
+  /// * `format` - The desired output format
   ///
   /// # Returns
   ///
-  /// A `RuntimeResult<String>` containing the transcription text or an error.
+  /// A `RuntimeResult<String>` containing the formatted transcription or an error.
   pub async fn transcribe_file(
     &self,
     file_path: &str,
+    format: OutputFormat,
   ) -> RuntimeResult<String> {
     validate_file_exists(file_path)
       .await
@@ -102,16 +109,18 @@ impl App {
 
     let mut temp_converted_file = TemporaryFile::new(converted_file_path);
 
-    let whisper =
-      self.create_whisper_instance(temp_converted_file.path().to_string());
-    let transcript = whisper
+    let whisper = self
+      .create_whisper_instance(temp_converted_file.path().to_string(), format);
+    let output = whisper
       .transcribe()
       .await
       .map_err(|e| RuntimeError::Transcription(e.to_string()))?;
 
     self.cleanup_file(&mut temp_converted_file).await;
 
-    return Ok(transcript);
+    return output
+      .format(format)
+      .map_err(|e| RuntimeError::Transcription(e.to_string()));
   }
 
   /// Records audio without transcription.
@@ -158,10 +167,17 @@ impl App {
   /// Records audio using configured settings, converts it to Whisper-compatible
   /// format, and performs transcription using the configured Whisper service.
   ///
+  /// # Arguments
+  ///
+  /// * `format` - The desired output format
+  ///
   /// # Returns
   ///
-  /// A `RuntimeResult<String>` containing the transcription text or an error.
-  pub async fn record_and_transcribe(&self) -> RuntimeResult<String> {
+  /// A `RuntimeResult<String>` containing the formatted transcription or an error.
+  pub async fn record_and_transcribe(
+    &self,
+    format: OutputFormat,
+  ) -> RuntimeResult<String> {
     let audio = self.create_audio();
     let file_path = audio
       .record_audio()
@@ -177,9 +193,9 @@ impl App {
 
     let mut temp_converted_file = TemporaryFile::new(converted_file_path);
 
-    let whisper =
-      self.create_whisper_instance(temp_converted_file.path().to_string());
-    let transcript = whisper
+    let whisper = self
+      .create_whisper_instance(temp_converted_file.path().to_string(), format);
+    let output = whisper
       .transcribe()
       .await
       .map_err(|e| RuntimeError::Transcription(e.to_string()))?;
@@ -187,6 +203,8 @@ impl App {
     self.cleanup_file(&mut temp_original_file).await;
     self.cleanup_file(&mut temp_converted_file).await;
 
-    return Ok(transcript);
+    return output
+      .format(format)
+      .map_err(|e| RuntimeError::Transcription(e.to_string()));
   }
 }

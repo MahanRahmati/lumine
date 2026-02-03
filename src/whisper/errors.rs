@@ -25,10 +25,8 @@ pub enum WhisperError {
   )]
   ResponseError,
 
-  #[error(
-    "Failed to decode Whisper response. The service may be experiencing issues or the audio format may be unsupported."
-  )]
-  DecodeError,
+  #[error("Failed to decode Whisper response. {0}")]
+  DecodeError(String),
 }
 
 /// Result type for Whisper operations.

@@ -11,6 +11,7 @@
 //! - [`WhisperResult<T>`]: Result type alias for transcription operations
 
 mod errors;
+mod responses;
 
 #[cfg(test)]
 mod whisper_tests;
@@ -19,16 +20,13 @@ use reqwest::multipart;
 
 use crate::files::operations;
 use crate::network::{HttpClient, errors::NetworkError};
+use crate::output::format::OutputFormat;
 use crate::vlog;
 use crate::whisper::errors::{WhisperError, WhisperResult};
-
-/// Response from the Whisper transcription service.
-///
-/// Contains the transcribed text from an audio file.
-#[derive(Debug, Clone, serde::Deserialize)]
-pub struct WhisperResponse {
-  pub text: String,
-}
+use crate::whisper::responses::{
+  WhisperJsonResponse, WhisperResponse, WhisperTextResponse,
+  WhisperVerboseJsonResponse, get_whisper_format,
+};
 
 /// Whisper transcription interface.
 ///
@@ -37,6 +35,7 @@ pub struct WhisperResponse {
 pub struct Whisper {
   url: String,
   file_path: String,
+  format: OutputFormat,
 }
 
 impl Whisper {
@@ -46,26 +45,35 @@ impl Whisper {
   ///
   /// * `url` - The Whisper service URL for transcription
   /// * `file_path` - Path to the audio file to transcribe
+  /// * `format` - The desired output format
   ///
   /// # Returns
   ///
   /// A new `Whisper` instance.
-  pub fn new(url: String, file_path: String) -> Self {
-    return Whisper { url, file_path };
+  pub fn new(url: String, file_path: String, format: OutputFormat) -> Self {
+    return Whisper {
+      url,
+      file_path,
+      format,
+    };
   }
 
   /// Transcribes the audio file using Whisper API.
   ///
+  /// # Arguments
+  ///
+  /// * `format` - The desired output format
+  ///
   /// # Returns
   ///
-  /// A `WhisperResult<String>` containing the transcribed text or an error.
-  pub async fn transcribe(&self) -> WhisperResult<String> {
+  /// A `WhisperResult<WhisperResponse>` containing the transcription data or an error.
+  pub async fn transcribe(&self) -> WhisperResult<WhisperResponse> {
     vlog!("Sending audio file to Whisper transcription service...");
 
-    let response = self.transcribe_remote().await?;
+    let output = self.transcribe_remote().await?;
 
     vlog!("Transcription completed successfully.");
-    return Ok(response.text);
+    return Ok(output);
   }
 
   async fn transcribe_remote(&self) -> WhisperResult<WhisperResponse> {
@@ -90,25 +98,53 @@ impl Whisper {
     );
 
     let form = multipart::Form::new()
-      .text("response_format", "json")
+      .text("response_format", get_whisper_format(self.format))
       .part("file", file_part);
 
     let client = HttpClient::new(self.url.clone());
 
-    match client
-      .post_with_form::<WhisperResponse>(form, "inference")
-      .await
-    {
-      Ok(response) => return Ok(response),
-      Err(network_error) => {
-        let whisper_error = match network_error {
-          NetworkError::RequestFailed => WhisperError::RequestFailed,
-          NetworkError::InvalidURL(url) => WhisperError::InvalidURL(url),
-          NetworkError::ResponseError => WhisperError::ResponseError,
-          NetworkError::DecodeError => WhisperError::DecodeError,
-        };
-        return Err(whisper_error);
+    return self.deserialize_response(&client, form, self.format).await;
+  }
+
+  async fn deserialize_response(
+    &self,
+    client: &HttpClient,
+    form: multipart::Form,
+    format: OutputFormat,
+  ) -> WhisperResult<WhisperResponse> {
+    match format {
+      OutputFormat::Text => {
+        let response = client
+          .post_with_form::<WhisperJsonResponse>(form, "inference")
+          .await
+          .map_err(|e| self.map_network_error(e))?;
+        return Ok(WhisperResponse::Text(WhisperTextResponse {
+          text: response.text,
+        }));
       }
+      OutputFormat::Json => {
+        let response = client
+          .post_with_form::<WhisperJsonResponse>(form, "inference")
+          .await
+          .map_err(|e| self.map_network_error(e))?;
+        return Ok(WhisperResponse::Json(response));
+      }
+      OutputFormat::FullJson => {
+        let response = client
+          .post_with_form::<WhisperVerboseJsonResponse>(form, "inference")
+          .await
+          .map_err(|e| self.map_network_error(e))?;
+        return Ok(WhisperResponse::VerboseJson(response));
+      }
+    }
+  }
+
+  fn map_network_error(&self, network_error: NetworkError) -> WhisperError {
+    return match network_error {
+      NetworkError::RequestFailed => WhisperError::RequestFailed,
+      NetworkError::InvalidURL(url) => WhisperError::InvalidURL(url),
+      NetworkError::ResponseError => WhisperError::ResponseError,
+      NetworkError::DecodeError => WhisperError::DecodeError(String::new()),
     };
   }
 }

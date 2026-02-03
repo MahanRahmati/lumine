@@ -13,18 +13,25 @@ async fn test_send_audio() {
   );
 
   let config = Config::default();
-  let whisper =
-    Whisper::new(config.get_whisper_url(), sample_file_path.to_string());
+  let whisper = Whisper::new(
+    config.get_whisper_url(),
+    sample_file_path.to_string(),
+    OutputFormat::Text,
+  );
 
   let result = whisper.transcribe().await;
   match result {
-    Ok(transcript) => {
-      assert!(!transcript.is_empty());
-    }
+    Ok(transcript) => match transcript {
+      WhisperResponse::Text(text_response) => {
+        assert!(!text_response.text.is_empty());
+      }
+      _ => panic!("Expected Text response variant"),
+    },
     Err(error) => match error {
       WhisperError::InvalidURL(_)
       | WhisperError::RequestFailed
-      | WhisperError::ResponseError => (),
+      | WhisperError::ResponseError
+      | WhisperError::DecodeError(_) => (),
       _ => panic!("Expected network-related error, got: {:?}", error),
     },
   }
@@ -33,8 +40,11 @@ async fn test_send_audio() {
 #[tokio::test]
 async fn test_send_audio_file_not_found() {
   let config = Config::default();
-  let whisper =
-    Whisper::new(config.get_whisper_url(), "nonexistent_file.wav".to_string());
+  let whisper = Whisper::new(
+    config.get_whisper_url(),
+    "nonexistent_file.wav".to_string(),
+    OutputFormat::Text,
+  );
 
   let result = whisper.transcribe().await;
   assert!(result.is_err());
@@ -53,8 +63,11 @@ async fn test_send_audio_with_sample_file_invalid_url() {
     "Sample file should exist"
   );
 
-  let whisper =
-    Whisper::new("invalid-url".to_string(), sample_file_path.to_string());
+  let whisper = Whisper::new(
+    "invalid-url".to_string(),
+    sample_file_path.to_string(),
+    OutputFormat::Text,
+  );
 
   let result = whisper.transcribe().await;
   assert!(result.is_err());
